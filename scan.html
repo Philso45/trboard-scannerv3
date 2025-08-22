@@ -6,147 +6,73 @@
   <title>Scanner Ticket Restaurant</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 20px;
-    }
-    #scanner-container {
-      position: relative;
-      display: inline-block;
-    }
-    video {
-      width: 100%;
-      max-width: 400px;
-      border: 2px solid #333;
-      border-radius: 10px;
-    }
-    #scan-area {
-      position: absolute;
-      top: 40%;
-      left: 15%;
-      width: 70%;
-      height: 20%;
-      border: 2px dashed red;
-      pointer-events: none;
-    }
-    #result {
-      margin-top: 20px;
-      font-size: 1.2em;
-      color: #333;
-    }
+    body { font-family: Arial; text-align: center; background:#f9f9f9; margin:0; padding:20px;}
+    video { width:100%; max-width:400px; border:2px solid #333; border-radius:10px; }
+    #scan-area { position:absolute; top:40%; left:15%; width:70%; height:20%; border:2px dashed red; pointer-events:none;}
+    #scanner-container { position:relative; display:inline-block; }
+    #result { margin-top:20px; font-size:1.2em; color:#333; }
   </style>
 </head>
 <body>
-  <h1>Scanner Ticket Restaurant</h1>
-  <div id="scanner-container">
-    <video id="video" playsinline></video>
-    <div id="scan-area"></div>
-  </div>
-  <div id="result">Passez le code-barres devant la zone rouge...</div>
+<h1>Scanner Ticket Restaurant</h1>
+<div id="scanner-container">
+  <video id="video" playsinline></video>
+  <div id="scan-area"></div>
+</div>
+<div id="result">Passez le code-barres devant la caméra...</div>
 
-  <script>
-    const codeReader = new ZXing.BrowserMultiFormatReader();
-    const videoElement = document.getElementById('video');
-    const resultElement = document.getElementById('result');
+<script>
+const codeReader = new ZXing.BrowserMultiFormatReader();
+const videoElement = document.getElementById('video');
+const resultElement = document.getElementById('result');
 
-    // Émetteurs simplifiés
-    const emetteurs = [
-      {prefix: "4270", name: "Edenred"},
-      {prefix: "5399", name: "Sodexo"},
-      {prefix: "5000", name: "UP"},
-      {prefix: "7000", name: "Swile"}
-    ];
+const emetteurs = [
+  {prefix:"4270", name:"Edenred"},
+  {prefix:"5399", name:"Sodexo"},
+  {prefix:"5000", name:"UP"},
+  {prefix:"7000", name:"Swile"}
+];
 
-    function decodeTicket(ticketCode) {
-      if(ticketCode.length !== 20){
-        return {emetteur: "Inconnu", montant: "0,00", annee: "Inconnue"};
-      }
+function decodeTicket(code){
+  if(code.length !== 20) return {emetteur:"Inconnu", montant:"0,00", annee:"Inconnue"};
+  let emetteur = "Inconnu";
+  for(let e of emetteurs){
+    if(code.startsWith(e.prefix)) emetteur=e.name;
+  }
+  const euros = parseInt(code.slice(12,14));
+  const centimes = parseInt(code.slice(14,16));
+  const montant = `${euros},${centimes.toString().padStart(2,'0')} €`;
+  const annee = code.slice(16,20);
+  return {emetteur, montant, annee};
+}
 
-      let emetteur = "Inconnu";
-      for (let e of emetteurs) {
-        if (ticketCode.startsWith(e.prefix)) {
-          emetteur = e.name;
-          break;
-        }
-      }
+// Scanner vidéo live
+codeReader.listVideoInputDevices()
+.then(videoInputDevices=>{
+  if(videoInputDevices.length===0){ resultElement.textContent="Aucune caméra détectée"; return;}
+  let backCamera = videoInputDevices.find(d=>d.label.toLowerCase().includes("back")||d.label.toLowerCase().includes("environment"));
+  const deviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
 
-      // Montant : positions 13-16 (indices 12 à 15)
-      const euros = parseInt(ticketCode.slice(12,14));
-      const centimes = parseInt(ticketCode.slice(14,16));
-      const montant = `${euros},${centimes.toString().padStart(2,'0')} €`;
+  codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err)=>{
+    if(result){
+      const info = decodeTicket(result.text);
+      resultElement.innerHTML = `<strong>Émetteur :</strong> ${info.emetteur}<br>
+                                 <strong>Montant :</strong> ${info.montant}<br>
+                                 <strong>Année :</strong> ${info.annee}`;
+      if(navigator.vibrate) navigator.vibrate(200); // vibration
 
-      // Année : positions 17-20
-      const annee = ticketCode.slice(16,20);
+      // Stop caméra
+      codeReader.reset();
 
-      return {emetteur, montant, annee};
+      // Retour page précédente après 0.5s
+      setTimeout(()=>window.history.back(),500);
     }
-
-    // Accès caméra arrière
-    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-      .then(stream => {
-        videoElement.srcObject = stream;
-        videoElement.setAttribute("playsinline", true);
-        videoElement.play();
-
-        const captureCanvas = document.createElement("canvas");
-        const ctx = captureCanvas.getContext("2d");
-
-        const scanInterval = setInterval(() => {
-          const videoWidth = videoElement.videoWidth;
-          const videoHeight = videoElement.videoHeight;
-          if (!videoWidth || !videoHeight) return;
-
-          const sx = videoWidth * 0.15;
-          const sy = videoHeight * 0.4;
-          const sw = videoWidth * 0.7;
-          const sh = videoHeight * 0.2;
-
-          captureCanvas.width = sw;
-          captureCanvas.height = sh;
-          ctx.drawImage(videoElement, sx, sy, sw, sh, 0, 0, sw, sh);
-
-          try {
-            const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(captureCanvas);
-            const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
-            const reader = new ZXing.MultiFormatReader();
-            const result = reader.decode(bitmap);
-            if (result) {
-              const info = decodeTicket(result.getText());
-
-              // Vibration courte à la détection
-              if (navigator.vibrate) navigator.vibrate(200);
-
-              // Affichage rapide avant fermeture
-              resultElement.innerHTML = `
-                <strong>Émetteur :</strong> ${info.emetteur} <br>
-                <strong>Montant :</strong> ${info.montant} <br>
-                <strong>Année :</strong> ${info.annee}
-              `;
-
-              // Arrêt caméra et intervalle
-              clearInterval(scanInterval);
-              const tracks = videoElement.srcObject.getTracks();
-              tracks.forEach(track => track.stop());
-
-              // Retour automatique à l'écran précédent
-              setTimeout(() => {
-                window.history.back();
-              }, 500); // petit délai pour voir le résultat
-            }
-          } catch (err) {
-            // Pas de code-barres détecté
-          }
-
-        }, 200);
-
-      })
-      .catch(err => {
-        console.error(err);
-        resultElement.textContent = "Impossible d'accéder à la caméra arrière.";
-      });
-  </script>
+    if(err && !(err instanceof ZXing.NotFoundException)){
+      console.error(err);
+    }
+  });
+})
+.catch(err=>{ console.error(err); resultElement.textContent="Impossible d'accéder à la caméra"; });
+</script>
 </body>
 </html>
