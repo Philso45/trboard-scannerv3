@@ -13,11 +13,25 @@
       margin: 0;
       padding: 20px;
     }
+    #scanner-container {
+      position: relative;
+      display: inline-block;
+    }
     video {
       width: 100%;
       max-width: 400px;
       border: 2px solid #333;
       border-radius: 10px;
+    }
+    /* Zone de capture visible pour aider l'utilisateur */
+    #scan-area {
+      position: absolute;
+      top: 40%;
+      left: 15%;
+      width: 70%;
+      height: 20%;
+      border: 2px dashed red;
+      pointer-events: none;
     }
     #result {
       margin-top: 20px;
@@ -28,15 +42,18 @@
 </head>
 <body>
   <h1>Scanner Ticket Restaurant</h1>
-  <video id="video" playsinline></video>
-  <div id="result">Passez un ticket devant la caméra...</div>
+  <div id="scanner-container">
+    <video id="video" playsinline></video>
+    <div id="scan-area"></div>
+  </div>
+  <div id="result">Passez le code-barres devant la zone rouge...</div>
 
   <script>
     const codeReader = new ZXing.BrowserMultiFormatReader();
     const videoElement = document.getElementById('video');
     const resultElement = document.getElementById('result');
 
-    // Liste simplifiée des émetteurs
+    // Émetteurs simplifiés
     const emetteurs = [
       {prefix: "4270", name: "Edenred"},
       {prefix: "5399", name: "Sodexo"},
@@ -52,45 +69,54 @@
           break;
         }
       }
-      // On suppose que les 3 derniers chiffres = montant en centimes
       let montant = parseInt(ticketCode.slice(-3)) / 100;
       return {emetteur, montant};
     }
 
-    // Démarrage du scanner
-    codeReader
-      .listVideoInputDevices()
-      .then(videoInputDevices => {
-        if(videoInputDevices.length === 0){
-          resultElement.textContent = "Aucune caméra détectée.";
-          return;
-        }
+    // On force la caméra arrière via facingMode
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then(stream => {
+        videoElement.srcObject = stream;
+        videoElement.setAttribute("playsinline", true);
+        videoElement.play();
 
-        // Cherche caméra arrière (back / environment)
-        let backCamera = videoInputDevices.find(device =>
-          device.label.toLowerCase().includes("back") || 
-          device.label.toLowerCase().includes("environment")
-        );
+        // On crée un interval pour lire le code-barres dans la zone centrale
+        const captureCanvas = document.createElement("canvas");
+        const ctx = captureCanvas.getContext("2d");
 
-        // Si aucune caméra arrière trouvée, on prend la première
-        const selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+        const scanInterval = setInterval(() => {
+          const videoWidth = videoElement.videoWidth;
+          const videoHeight = videoElement.videoHeight;
+          if (!videoWidth || !videoHeight) return;
 
-        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
-          if (result) {
-            const info = decodeTicket(result.text);
-            resultElement.innerHTML = `
-              <strong>Émetteur :</strong> ${info.emetteur} <br>
-              <strong>Montant :</strong> ${info.montant.toFixed(2)} €
-            `;
+          // Zone de capture centrée (20% de la hauteur)
+          const sx = videoWidth * 0.15;
+          const sy = videoHeight * 0.4;
+          const sw = videoWidth * 0.7;
+          const sh = videoHeight * 0.2;
+
+          captureCanvas.width = sw;
+          captureCanvas.height = sh;
+          ctx.drawImage(videoElement, sx, sy, sw, sh, 0, 0, sw, sh);
+
+          try {
+            const luminanceSource = new ZXing.HTMLCanvasElementLuminanceSource(captureCanvas);
+            const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(luminanceSource));
+            const reader = new ZXing.MultiFormatReader();
+            const result = reader.decode(bitmap);
+            if (result) {
+              const info = decodeTicket(result.getText());
+              resultElement.innerHTML = `<strong>Émetteur :</strong> ${info.emetteur} <br><strong>Montant :</strong> ${info.montant.toFixed(2)} €`;
+            }
+          } catch (err) {
+            // Aucun code-barres détecté, pas d'erreur affichée
           }
-          if (err && !(err instanceof ZXing.NotFoundException)) {
-            console.error(err);
-          }
-        });
+
+        }, 200); // toutes les 200ms
       })
       .catch(err => {
         console.error(err);
-        resultElement.textContent = "Erreur lors de l'accès à la caméra.";
+        resultElement.textContent = "Impossible d'accéder à la caméra arrière.";
       });
   </script>
 </body>
