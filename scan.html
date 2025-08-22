@@ -1,108 +1,347 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Scan Ticket Restaurant</title>
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #000;
-      overflow: hidden;
-    }
-    #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    #frame {
-      position: absolute;
-      border: 3px solid red;
-      width: 80%;
-      height: 25%;
-      top: 37.5%;
-      left: 10%;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Tickets Restaurant</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2575fc;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .instructions {
+            background-color: #f0f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .scanner-container {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #2575fc;
+        }
+        
+        #reader {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .scan-line {
+            position: absolute;
+            height: 2px;
+            width: 100%;
+            background: #2575fc;
+            top: 50%;
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { top: 10%; }
+            50% { top: 90%; }
+            100% { top: 10%; }
+        }
+        
+        .result-container {
+            display: none;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #e8f4ff;
+            border-radius: 8px;
+        }
+        
+        .ticket-list {
+            width: 100%;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .ticket-item {
+            background-color: #f0f7ff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .button {
+            background: #2575fc;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        
+        .button:hover {
+            background: #1c64e0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .success-sound {
+            display: none;
+        }
+        
+        .scanner-status {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #2575fc;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2575fc;
+            margin-bottom: 20px;
+        }
+        
+        .history-title {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #2575fc;
+            font-size: 18px;
+            border-bottom: 2px solid #2575fc;
+            padding-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-  <video id="video" autoplay playsinline></video>
-  <div id="frame"></div>
-  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <div class="container">
+        <header>
+            <div class="logo">🍽️ TR Scanner</div>
+            <h1>Scanner de Tickets Restaurant</h1>
+            <div class="instructions">
+                Placez le code-barres du ticket restaurant dans le cadre de scan. L'application détectera automatiquement le code et enregistrera les informations.
+            </div>
+        </header>
+        
+        <div class="scanner-status" id="scannerStatus">Scanner prêt...</div>
+        
+        <div class="scanner-container">
+            <div id="reader"></div>
+            <div class="scan-line"></div>
+        </div>
+        
+        <button class="button" id="toggleScanner">Démarrer le Scanner</button>
+        
+        <div class="result-container" id="resultContainer">
+            <h2>Ticket scanné avec succès!</h2>
+            <div class="result-item" id="amountResult">Montant: </div>
+            <div class="result-item" id="emitterResult">Émetteur: </div>
+        </div>
+        
+        <div class="history-title">Historique des scans</div>
+        <div class="ticket-list" id="ticketList">
+            <!-- Les tickets scannés apparaîtront ici -->
+        </div>
+        
+        <audio class="success-sound" id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-ball-tap-2073.mp3"></audio>
+    </div>
 
-  <script>
-    const video = document.getElementById('video');
-    const beep = document.getElementById('beep');
-
-    async function startScanner() {
-      try {
-        const codeReader = new ZXing.BrowserBarcodeReader();
-
-        // Forcer la caméra arrière
-        const constraints = {
-          video: {
-            facingMode: { exact: "environment" }
-          }
-        };
-
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream;
-
-        // Limiter aux formats Code128 + ITF pour tickets resto
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-          ZXing.BarcodeFormat.CODE_128,
-          ZXing.BarcodeFormat.ITF
-        ]);
-
-        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-          if (result) {
-            beep.play();
-
-            const raw = result.getText();
-            const info = decodeTicket(raw);
-
-            alert(`✅ Ticket détecté !\n\nÉmetteur: ${info.emetteur}\nMontant: ${info.montant} €\nCode brut: ${raw}`);
-
-            stream.getTracks().forEach(track => track.stop());
-            window.close();
-          }
-        }, hints);
-
-      } catch (e) {
-        console.error(e);
-        alert("Erreur caméra : " + e.message);
-      }
-    }
-
-    function decodeTicket(barcode) {
-      let partieB = barcode.match(/(\d{12,})/);
-      if (!partieB) return { montant: "?", emetteur: "?" };
-
-      let data = partieB[1];
-      let montant = parseInt(data.substring(0, 4)) / 100;
-      let codeEmetteur = data.substring(4, 6);
-
-      let table = {
-        "25": "Edenred",
-        "15": "UpDéjeuner",
-        "45": "Pluxee"
-      };
-
-      return {
-        montant: isNaN(montant) ? "?" : montant.toFixed(2),
-        emetteur: table[codeEmetteur] || "Inconnu (" + codeEmetteur + ")"
-      };
-    }
-
-    startScanner();
-  </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const scannerContainer = document.getElementById('reader');
+            const toggleScannerBtn = document.getElementById('toggleScanner');
+            const resultContainer = document.getElementById('resultContainer');
+            const amountResult = document.getElementById('amountResult');
+            const emitterResult = document.getElementById('emitterResult');
+            const ticketList = document.getElementById('ticketList');
+            const successSound = document.getElementById('successSound');
+            const scannerStatus = document.getElementById('scannerStatus');
+            
+            let html5QrcodeScanner = null;
+            let isScanning = false;
+            let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
+            
+            // Afficher l'historique des tickets scannés
+            function updateTicketList() {
+                ticketList.innerHTML = '';
+                scannedTickets.forEach(ticket => {
+                    const ticketElement = document.createElement('div');
+                    ticketElement.className = 'ticket-item';
+                    ticketElement.innerHTML = `
+                        <div>${ticket.emitter}</div>
+                        <div>${ticket.amount} €</div>
+                    `;
+                    ticketList.appendChild(ticketElement);
+                });
+            }
+            
+            updateTicketList();
+            
+            // Fonction pour traiter les données du code-barres
+            function processBarcodeData(data) {
+                if (data.length < 20) {
+                    scannerStatus.textContent = "Code-barres invalide";
+                    return null;
+                }
+                
+                // Extraire les caractères 13 à 16 (index 12 à 15)
+                const amountDigits = data.substring(12, 16);
+                // Convertir en décimal avec 2 chiffres après la virgule
+                const amount = (parseInt(amountDigits) / 100).toFixed(2).replace('.', ',');
+                
+                // Extraire les caractères 17 à 18 (index 16 à 17)
+                const emitterCode = parseInt(data.substring(16, 18));
+                let emitter = "Inconnu";
+                
+                // Déterminer l'émetteur selon les spécifications
+                if (emitterCode < 10) {
+                    emitter = "Edenred";
+                } else if (emitterCode < 20) {
+                    emitter = "Up Déjeuner";
+                } else if (emitterCode < 30) {
+                    emitter = "Pluxee";
+                } else if (emitterCode < 40) {
+                    emitter = "Autre émetteur";
+                }
+                
+                return { amount, emitter };
+            }
+            
+            // Démarrer le scanner
+            function startScanner() {
+                if (!isScanning) {
+                    html5QrcodeScanner = new Html5QrcodeScanner(
+                        "reader", 
+                        { 
+                            fps: 10, 
+                            qrbox: { width: 250, height: 150 },
+                            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE, Html5QrcodeScanType.SCAN_TYPE_BARCODE]
+                        },
+                        false
+                    );
+                    
+                    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                    isScanning = true;
+                    toggleScannerBtn.textContent = "Arrêter le Scanner";
+                    scannerStatus.textContent = "En cours de scan...";
+                    scannerStatus.style.color = "#2575fc";
+                }
+            }
+            
+            // Arrêter le scanner
+            function stopScanner() {
+                if (isScanning && html5QrcodeScanner) {
+                    html5QrcodeScanner.clear().then(() => {
+                        isScanning = false;
+                        toggleScannerBtn.textContent = "Démarrer le Scanner";
+                        scannerStatus.textContent = "Scanner arrêté";
+                        scannerStatus.style.color = "#ff4d4d";
+                    }).catch(err => {
+                        console.error("Erreur lors de l'arrêt du scanner:", err);
+                    });
+                }
+            }
+            
+            // Gérer le succès du scan
+            function onScanSuccess(decodedText, decodedResult) {
+                const ticketData = processBarcodeData(decodedText);
+                
+                if (ticketData) {
+                    // Jouer le son de succès
+                    successSound.play();
+                    
+                    // Afficher les résultats
+                    amountResult.textContent = `Montant: ${ticketData.amount} €`;
+                    emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
+                    resultContainer.style.display = 'block';
+                    
+                    // Sauvegarder le ticket
+                    scannedTickets.push(ticketData);
+                    localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                    updateTicketList();
+                    
+                    // Arrêter le scanner et préparer la fermeture
+                    stopScanner();
+                    scannerStatus.textContent = "Ticket scanné avec succès!";
+                    scannerStatus.style.color = "#4caf50";
+                    
+                    // Fermer automatiquement après 2 secondes
+                    setTimeout(() => {
+                        // Simuler la fermeture de la page (dans un environnement réel, cela fermerait la fenêtre)
+                        alert("Scan réussi! Vous pouvez maintenant retourner à l'application Glide.");
+                    }, 2000);
+                } else {
+                    scannerStatus.textContent = "Erreur de traitement du code-barres";
+                    scannerStatus.style.color = "#ff4d4d";
+                }
+            }
+            
+            // Gérer l'échec du scan
+            function onScanFailure(error) {
+                // Les erreurs sont normales pendant le scan, donc on ne les affiche pas toutes
+            }
+            
+            // Bouton pour démarrer/arrêter le scanner
+            toggleScannerBtn.addEventListener('click', function() {
+                if (isScanning) {
+                    stopScanner();
+                } else {
+                    startScanner();
+                }
+            });
+            
+            // Démarrer automatiquement le scanner au chargement de la page
+            startScanner();
+        });
+    </script>
 </body>
 </html>
