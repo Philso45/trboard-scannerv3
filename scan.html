@@ -36,7 +36,7 @@
     const videoElement = document.getElementById('video');
     const resultElement = document.getElementById('result');
 
-    // Liste des émetteurs simplifiée (à adapter selon tes tickets)
+    // Liste simplifiée des émetteurs
     const emetteurs = [
       {prefix: "4270", name: "Edenred"},
       {prefix: "5399", name: "Sodexo"},
@@ -65,7 +65,16 @@
           resultElement.textContent = "Aucune caméra détectée.";
           return;
         }
-        const selectedDeviceId = videoInputDevices[0].deviceId;
+
+        // Cherche caméra arrière (back / environment)
+        let backCamera = videoInputDevices.find(device =>
+          device.label.toLowerCase().includes("back") || 
+          device.label.toLowerCase().includes("environment")
+        );
+
+        // Si aucune caméra arrière trouvée, on prend la première
+        const selectedDeviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+
         codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
           if (result) {
             const info = decodeTicket(result.text);
