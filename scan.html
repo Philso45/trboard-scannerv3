@@ -121,21 +121,6 @@
       pointer-events: none;
     }
     
-    .result-container {
-      display: none;
-      background-color: #f9f9f9;
-      padding: 15px;
-      border-radius: 10px;
-      margin-top: 20px;
-    }
-    
-    .result-item {
-      margin-bottom: 10px;
-      padding: 10px;
-      background-color: #e8f4ff;
-      border-radius: 8px;
-    }
-    
     .total-amount {
       background-color: #2575fc;
       color: white;
@@ -190,6 +175,10 @@
     
     .button-danger {
       background: #f44336;
+    }
+    
+    .button-success {
+      background: #4caf50;
     }
     
     .scanner-status {
@@ -258,6 +247,7 @@
     </div>
     
     <button class="button" id="toggleScanner">Arrêter le Scanner</button>
+    <button class="button button-success" id="exportButton">Exporter en CSV</button>
     <button class="button button-danger" id="clearButton">Supprimer tous les tickets</button>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
@@ -278,6 +268,7 @@
       const yearSelector = document.getElementById('year');
       const errorMessage = document.getElementById('errorMessage');
       const clearButton = document.getElementById('clearButton');
+      const exportButton = document.getElementById('exportButton');
       
       let codeReader = null;
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
@@ -321,8 +312,12 @@
         }
       }
       
-      // Afficher la liste des tickets
+      // Afficher la liste des tickets (sans défilement automatique)
       function updateTicketsList() {
+        // Sauvegarder la position de défilement actuelle
+        const scrollPosition = ticketsContainer.scrollTop;
+        const shouldScroll = ticketsContainer.scrollHeight - ticketsContainer.scrollTop === ticketsContainer.clientHeight;
+        
         ticketsContainer.innerHTML = '';
         
         if (scannedTickets.length === 0) {
@@ -346,6 +341,9 @@
           ticketsContainer.appendChild(ticketElement);
         });
         
+        // Restaurer la position de défilement
+        ticketsContainer.scrollTop = scrollPosition;
+        
         updateTotals();
       }
       
@@ -360,6 +358,45 @@
           totalAmountElement.textContent = 'Total: 0,00 €';
           emitterTotalsElement.innerHTML = '';
         }
+      }
+      
+      // Exporter les données en CSV
+      function exportToCSV() {
+        if (scannedTickets.length === 0) {
+          showError("Aucun ticket à exporter");
+          return;
+        }
+        
+        // Entêtes CSV
+        const headers = ["Émetteur", "Montant", "Année", "ID", "Date", "Code"];
+        let csvContent = headers.join(";") + "\n";
+        
+        // Données CSV
+        scannedTickets.forEach(ticket => {
+          const row = [
+            ticket.emitter,
+            ticket.amount,
+            ticket.year,
+            ticket.id,
+            ticket.date,
+            ticket.code
+          ];
+          csvContent += row.join(";") + "\n";
+        });
+        
+        // Créer un blob et un lien de téléchargement
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const date = new Date().toISOString().split('T')[0];
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `tickets_restaurant_${date}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
       
       updateTicketsList();
@@ -517,6 +554,8 @@
           
         } catch (e) {
           console.error("Erreur caméra arrière:", e);
+          scannerStatus.textContent = "Erreur caméra: " + e.message;
+          scannerStatus.style.color = "#ff4d4d";
           
           // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
           try {
@@ -575,6 +614,9 @@
       
       // Bouton pour effacer tous les tickets
       clearButton.addEventListener('click', clearAllTickets);
+      
+      // Bouton pour exporter en CSV
+      exportButton.addEventListener('click', exportToCSV);
       
       // Démarrer automatiquement le scanner au chargement de la page
       startScanner();
