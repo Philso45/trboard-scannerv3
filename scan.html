@@ -62,7 +62,7 @@
 
     function decodeTicket(ticketCode) {
       if(ticketCode.length !== 20){
-        return {emetteur: "Inconnu", montant: 0, annee: "Inconnue"};
+        return {emetteur: "Inconnu", montant: "0,00", annee: "Inconnue"};
       }
 
       let emetteur = "Inconnu";
@@ -73,9 +73,13 @@
         }
       }
 
-      let montantCentimes = parseInt(ticketCode.slice(11, 16));
-      let montant = montantCentimes / 100;
-      let annee = ticketCode.slice(16, 20);
+      // Montant : positions 13-16 (indices 12 à 15)
+      const euros = parseInt(ticketCode.slice(12,14));
+      const centimes = parseInt(ticketCode.slice(14,16));
+      const montant = `${euros},${centimes.toString().padStart(2,'0')} €`;
+
+      // Année : positions 17-20
+      const annee = ticketCode.slice(16,20);
 
       return {emetteur, montant, annee};
     }
@@ -112,25 +116,28 @@
             if (result) {
               const info = decodeTicket(result.getText());
 
-              // Optionnel : afficher brièvement avant retour
+              // Vibration courte à la détection
+              if (navigator.vibrate) navigator.vibrate(200);
+
+              // Affichage rapide avant fermeture
               resultElement.innerHTML = `
                 <strong>Émetteur :</strong> ${info.emetteur} <br>
-                <strong>Montant :</strong> ${info.montant.toFixed(2)} € <br>
+                <strong>Montant :</strong> ${info.montant} <br>
                 <strong>Année :</strong> ${info.annee}
               `;
 
-              // Stop caméra et intervalle
+              // Arrêt caméra et intervalle
               clearInterval(scanInterval);
               const tracks = videoElement.srcObject.getTracks();
               tracks.forEach(track => track.stop());
 
-              // Retour automatique à l'écran précédent pour rescanner
+              // Retour automatique à l'écran précédent
               setTimeout(() => {
-                window.history.back(); // ou navigation spécifique à ton app
-              }, 500); // petit délai pour que l'utilisateur voie le résultat
+                window.history.back();
+              }, 500); // petit délai pour voir le résultat
             }
           } catch (err) {
-            // Pas de code-barres détecté, on ignore
+            // Pas de code-barres détecté
           }
 
         }, 200);
