@@ -4,79 +4,71 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scanner Ticket Restaurant</title>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
-    body { font-family: Arial; text-align: center; background:#f9f9f9; margin:0; padding:20px;}
-    #reader { width:100%; max-width:400px; margin:auto; border:2px solid #333; border-radius:10px; }
-    #result { margin-top:20px; font-size:1.2em; color:#333; }
+    body { font-family: sans-serif; text-align: center; margin: 20px; }
+    video { width: 100%; max-width: 400px; border: 2px solid #ccc; border-radius: 10px; }
+    #result { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
   </style>
 </head>
 <body>
-<h1>Scanner Ticket Restaurant</h1>
-<div id="reader"></div>
-<div id="result">Passez le code-barres devant la caméra...</div>
+  <h2>Scanner Ticket Restaurant</h2>
+  <video id="video" autoplay></video>
+  <div id="result">Scannez un code...</div>
 
-<script>
-const emetteurs = [
-  {prefix:"4270", name:"Edenred"},
-  {prefix:"5399", name:"Sodexo"},
-  {prefix:"5000", name:"UP"},
-  {prefix:"7000", name:"Swile"}
-];
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.getElementById('video');
+    const resultElement = document.getElementById('result');
 
-// Fonction pour décoder le ticket
-function decodeTicket(code){
-  if(code.length !== 20) return {emetteur:"Inconnu", montant:"0,00", annee:"Inconnue"};
-  
-  let emetteur = "Inconnu";
-  for(let e of emetteurs){
-    if(code.startsWith(e.prefix)) emetteur=e.name;
-  }
+    // Table émetteurs
+    const EMETTEURS = {
+      "25": "Edenred",
+      "15": "UpDéjeuner",
+      "45": "Pluxee",
+      "35": "Natixis (Apétiz)"
+    };
 
-  // Montant : positions 13-16 (indices 12 à 15)
-  const euros = parseInt(code.slice(12,14));
-  const centimes = parseInt(code.slice(14,16));
-  const montant = `${euros},${centimes.toString().padStart(2,'0')} €`;
+    function decodeTicket(barcode) {
+      // Exemple : 010002530000
+      const partieB = barcode.match(/<(\d{12})</);
+      if (!partieB) return null;
 
-  // Année : positions 17-20
-  const annee = code.slice(16,20);
+      const b = partieB[1];
+      const montant = parseInt(b.substring(0, 4), 10) / 100; // ex 1000 -> 10,00 €
+      const emetteurCode = b.substring(4, 6);
+      const emetteur = EMETTEURS[emetteurCode] || "Inconnu";
 
-  return {emetteur, montant, annee};
-}
+      return { montant, emetteur, brut: barcode };
+    }
 
-// Initialiser le scanner
-const html5QrCode = new Html5Qrcode("reader");
+    async function startScanner() {
+      try {
+        const devices = await codeReader.listVideoInputDevices();
+        const selectedDeviceId = devices[0].deviceId;
 
-const qrConfig = { fps: 10, qrbox: {width: 300, height: 100}, facingMode: "environment" }; 
+        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
+          if (result) {
+            const decoded = decodeTicket(result.text);
+            if (decoded) {
+              resultElement.innerHTML = `
+                ✅ Ticket reconnu<br>
+                Émetteur : ${decoded.emetteur}<br>
+                Montant : ${decoded.montant.toFixed(2)} €<br>
+                <small>Code brut : ${decoded.brut}</small>
+              `;
+            } else {
+              resultElement.textContent = "Format de ticket invalide";
+            }
+          }
+        });
+      } catch (err) {
+        console.error(err);
+        resultElement.textContent = "Erreur d'accès à la caméra";
+      }
+    }
 
-html5QrCode.start(
-  { facingMode: "environment" }, 
-  qrConfig,
-  (decodedText, decodedResult) => {
-    // Ticket scanné
-    const info = decodeTicket(decodedText);
-
-    // Vibration courte
-    if(navigator.vibrate) navigator.vibrate(200);
-
-    // Affichage rapide
-    document.getElementById("result").innerHTML = `<strong>Émetteur :</strong> ${info.emetteur}<br>
-                                                    <strong>Montant :</strong> ${info.montant}<br>
-                                                    <strong>Année :</strong> ${info.annee}`;
-
-    // Arrêt du scanner
-    html5QrCode.stop().then(() => {
-      // Retour automatique après 0.5s pour rescanner
-      setTimeout(()=>window.history.back(),500);
-    }).catch(err => console.error("Erreur arrêt scanner :", err));
-  },
-  (errorMessage) => {
-    // Erreurs de lecture temporaires ignorées
-  }
-).catch(err => {
-  document.getElementById("result").textContent = "Impossible d'accéder à la caméra arrière";
-  console.error(err);
-});
-</script>
+    startScanner();
+  </script>
 </body>
 </html>
