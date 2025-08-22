@@ -23,9 +23,9 @@
     #frame {
       position: absolute;
       border: 3px solid red;
-      width: 80%;   /* élargi */
-      height: 35%;  /* plus haut */
-      top: 32.5%;   /* centré verticalement */
+      width: 80%;   /* large */
+      height: 25%;  /* plus bas qu'avant */
+      top: 37.5%;   /* pour rester centré verticalement */
       left: 10%;    /* centré horizontalement */
       box-sizing: border-box;
       border-radius: 10px;
@@ -73,7 +73,6 @@
     }
 
     function decodeTicket(barcode) {
-      // Exemple "010002530000"
       let partieB = barcode.match(/(\d{12,})/);
       if (!partieB) return { montant: "?", emetteur: "?" };
 
