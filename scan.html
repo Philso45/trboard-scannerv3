@@ -54,6 +54,27 @@
       line-height: 1.5;
     }
     
+    .year-selector {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .year-selector label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #2575fc;
+    }
+    
+    .year-selector select {
+      padding: 10px 15px;
+      border-radius: 50px;
+      border: 2px solid #2575fc;
+      font-size: 16px;
+      background-color: white;
+      color: #333;
+    }
+    
     .scanner-container {
       width: 100%;
       height: 300px;
@@ -171,6 +192,14 @@
       box-sizing: border-box;
       z-index: 5;
     }
+    
+    .glide-help {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f0f7ff;
+      border-radius: 10px;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -182,6 +211,16 @@
         Placez le code-barres du ticket restaurant dans le cadre de scan. L'application détectera automatiquement le code et enregistrera les informations.
       </div>
     </header>
+    
+    <div class="year-selector">
+      <label for="year">Année des tickets :</label>
+      <select id="year">
+        <option value="2024">2024</option>
+        <option value="2025" selected>2025</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
     
     <div class="scanner-status" id="scannerStatus">Démarrage de la caméra...</div>
     
@@ -197,12 +236,19 @@
       <h2>Ticket scanné avec succès!</h2>
       <div class="result-item" id="amountResult">Montant: </div>
       <div class="result-item" id="emitterResult">Émetteur: </div>
+      <div class="result-item" id="yearResult">Année: </div>
     </div>
     
-    <div class="history-title">Historique des scans</div>
+    <div class="history-title">Derniers tickets scannés</div>
     <div class="ticket-list" id="ticketList">
       <!-- Les tickets scannés apparaîtront ici -->
     </div>
+    
+    <div class="glide-help">
+      <strong>Pour Glide :</strong> Les données sont enregistrées dans le stockage local de votre navigateur. Pour les importer dans Glide, utilisez l'option d'importation de données et sélectionnez le fichier d'exportation.
+    </div>
+    
+    <button class="button" id="exportButton">Exporter pour Glide</button>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
   </div>
@@ -215,22 +261,34 @@
       const resultContainer = document.getElementById('resultContainer');
       const amountResult = document.getElementById('amountResult');
       const emitterResult = document.getElementById('emitterResult');
+      const yearResult = document.getElementById('yearResult');
       const ticketList = document.getElementById('ticketList');
       const scannerStatus = document.getElementById('scannerStatus');
+      const yearSelector = document.getElementById('year');
+      const exportButton = document.getElementById('exportButton');
       
       let codeReader = null;
       let isScanning = true;
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
+      let selectedYear = yearSelector.value;
+      
+      // Mettre à jour l'année sélectionnée
+      yearSelector.addEventListener('change', function() {
+        selectedYear = this.value;
+      });
       
       // Afficher l'historique des tickets scannés
       function updateTicketList() {
         ticketList.innerHTML = '';
-        scannedTickets.forEach(ticket => {
+        // Afficher seulement les 5 derniers tickets
+        const recentTickets = scannedTickets.slice(-5);
+        
+        recentTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
             <div>${ticket.emitter}</div>
-            <div>${ticket.amount} €</div>
+            <div>${ticket.amount} € (${ticket.year})</div>
           `;
           ticketList.appendChild(ticketElement);
         });
@@ -265,7 +323,43 @@
           emitter = "Autre émetteur";
         }
         
-        return { amount, emitter, code: data };
+        return { 
+          amount, 
+          emitter, 
+          year: selectedYear,
+          code: data,
+          date: new Date().toISOString().split('T')[0] // Date du scan
+        };
+      }
+      
+      // Exporter les données pour Glide
+      function exportToGlide() {
+        if (scannedTickets.length === 0) {
+          alert("Aucun ticket à exporter.");
+          return;
+        }
+        
+        // Convertir en CSV
+        const headers = "Émetteur,Montant,Année,Code,Date\n";
+        const csvContent = scannedTickets.map(ticket => {
+          return `${ticket.emitter},${ticket.amount},${ticket.year},${ticket.code},${ticket.date}`;
+        }).join("\n");
+        
+        const fullCsv = headers + csvContent;
+        
+        // Créer un blob et un lien de téléchargement
+        const blob = new Blob([fullCsv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const date = new Date().toISOString().split('T')[0];
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `tickets_restaurant_${date}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
       
       // Démarrer le scanner
@@ -300,6 +394,7 @@
                 // Afficher les résultats
                 amountResult.textContent = `Montant: ${ticketData.amount} €`;
                 emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
+                yearResult.textContent = `Année: ${ticketData.year}`;
                 resultContainer.style.display = 'block';
                 
                 // Sauvegarder le ticket
@@ -313,7 +408,9 @@
                 // Fermer automatiquement après 2 secondes
                 setTimeout(() => {
                   // Fermer la fenêtre (fonctionne si la page a été ouverte via window.open)
-                  window.close();
+                  if (window.opener || window.history.length > 1) {
+                    window.close();
+                  }
                 }, 2000);
               }
             }
@@ -344,6 +441,7 @@
                 if (ticketData) {
                   amountResult.textContent = `Montant: ${ticketData.amount} €`;
                   emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
+                  yearResult.textContent = `Année: ${ticketData.year}`;
                   resultContainer.style.display = 'block';
                   
                   scannedTickets.push(ticketData);
@@ -354,7 +452,9 @@
                   scannerStatus.style.color = "#4caf50";
                   
                   setTimeout(() => {
-                    window.close();
+                    if (window.opener || window.history.length > 1) {
+                      window.close();
+                    }
                   }, 2000);
                 }
               }
@@ -396,6 +496,9 @@
           startScanner();
         }
       });
+      
+      // Bouton d'exportation
+      exportButton.addEventListener('click', exportToGlide);
       
       // Démarrer automatiquement le scanner au chargement de la page
       startScanner();
