@@ -4,28 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scanner Ticket Restaurant</title>
-  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
   <style>
     body { font-family: Arial; text-align: center; background:#f9f9f9; margin:0; padding:20px;}
-    video { width:100%; max-width:400px; border:2px solid #333; border-radius:10px; }
-    #scan-area { position:absolute; top:40%; left:15%; width:70%; height:20%; border:2px dashed red; pointer-events:none;}
-    #scanner-container { position:relative; display:inline-block; }
+    #reader { width:100%; max-width:400px; margin:auto; border:2px solid #333; border-radius:10px; }
     #result { margin-top:20px; font-size:1.2em; color:#333; }
   </style>
 </head>
 <body>
 <h1>Scanner Ticket Restaurant</h1>
-<div id="scanner-container">
-  <video id="video" playsinline></video>
-  <div id="scan-area"></div>
-</div>
+<div id="reader"></div>
 <div id="result">Passez le code-barres devant la caméra...</div>
 
 <script>
-const codeReader = new ZXing.BrowserMultiFormatReader();
-const videoElement = document.getElementById('video');
-const resultElement = document.getElementById('result');
-
 const emetteurs = [
   {prefix:"4270", name:"Edenred"},
   {prefix:"5399", name:"Sodexo"},
@@ -46,33 +37,39 @@ function decodeTicket(code){
   return {emetteur, montant, annee};
 }
 
-// Scanner vidéo live
-codeReader.listVideoInputDevices()
-.then(videoInputDevices=>{
-  if(videoInputDevices.length===0){ resultElement.textContent="Aucune caméra détectée"; return;}
-  let backCamera = videoInputDevices.find(d=>d.label.toLowerCase().includes("back")||d.label.toLowerCase().includes("environment"));
-  const deviceId = backCamera ? backCamera.deviceId : videoInputDevices[0].deviceId;
+// Initialiser le scanner
+const html5QrCode = new Html5Qrcode("reader");
 
-  codeReader.decodeFromVideoDevice(deviceId, videoElement, (result, err)=>{
-    if(result){
-      const info = decodeTicket(result.text);
-      resultElement.innerHTML = `<strong>Émetteur :</strong> ${info.emetteur}<br>
-                                 <strong>Montant :</strong> ${info.montant}<br>
-                                 <strong>Année :</strong> ${info.annee}`;
-      if(navigator.vibrate) navigator.vibrate(200); // vibration
+const qrConfig = { fps: 10, qrbox: {width: 300, height: 100}, facingMode: "environment" }; 
 
-      // Stop caméra
-      codeReader.reset();
+html5QrCode.start(
+  { facingMode: "environment" }, 
+  qrConfig,
+  (decodedText, decodedResult) => {
+    // Ticket scanné
+    const info = decodeTicket(decodedText);
 
-      // Retour page précédente après 0.5s
+    // Vibration courte
+    if(navigator.vibrate) navigator.vibrate(200);
+
+    // Affichage rapide
+    document.getElementById("result").innerHTML = `<strong>Émetteur :</strong> ${info.emetteur}<br>
+                                                    <strong>Montant :</strong> ${info.montant}<br>
+                                                    <strong>Année :</strong> ${info.annee}`;
+
+    // Arrêt du scanner
+    html5QrCode.stop().then(() => {
+      // Retour automatique après 0.5s pour rescanner
       setTimeout(()=>window.history.back(),500);
-    }
-    if(err && !(err instanceof ZXing.NotFoundException)){
-      console.error(err);
-    }
-  });
-})
-.catch(err=>{ console.error(err); resultElement.textContent="Impossible d'accéder à la caméra"; });
+    }).catch(err => console.error("Erreur arrêt scanner :", err));
+  },
+  (errorMessage) => {
+    // on ignore les erreurs de lecture temporaires
+  }
+).catch(err => {
+  document.getElementById("result").textContent = "Impossible d'accéder à la caméra arrière";
+  console.error(err);
+});
 </script>
 </body>
 </html>
