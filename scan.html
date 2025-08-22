@@ -160,6 +160,23 @@
             border-bottom: 2px solid #2575fc;
             padding-bottom: 5px;
         }
+        
+        .camera-switch {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .switch-button {
+            background: #6a11cb;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
     </style>
 </head>
 <body>
@@ -177,6 +194,10 @@
         <div class="scanner-container">
             <div id="reader"></div>
             <div class="scan-line"></div>
+        </div>
+        
+        <div class="camera-switch">
+            <button class="switch-button" id="switchCamera">Changer de caméra</button>
         </div>
         
         <button class="button" id="toggleScanner">Démarrer le Scanner</button>
@@ -199,6 +220,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const scannerContainer = document.getElementById('reader');
             const toggleScannerBtn = document.getElementById('toggleScanner');
+            const switchCameraBtn = document.getElementById('switchCamera');
             const resultContainer = document.getElementById('resultContainer');
             const amountResult = document.getElementById('amountResult');
             const emitterResult = document.getElementById('emitterResult');
@@ -209,6 +231,8 @@
             let html5QrcodeScanner = null;
             let isScanning = false;
             let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
+            let backCamera = true; // Utiliser la caméra arrière par défaut
+            let currentCameraId = null;
             
             // Afficher l'historique des tickets scannés
             function updateTicketList() {
@@ -225,6 +249,25 @@
             }
             
             updateTicketList();
+            
+            // Obtenir l'ID de la caméra arrière
+            async function getBackCameraId() {
+                try {
+                    const devices = await Html5Qrcode.getCameras();
+                    for (const device of devices) {
+                        if (device.label.toLowerCase().includes('back') || 
+                            device.label.toLowerCase().includes('arrière') ||
+                            device.label.toLowerCase().includes('rear')) {
+                            return device.id;
+                        }
+                    }
+                    // Si aucune caméra arrière n'est trouvée, utiliser la première caméra
+                    return devices[0]?.id || null;
+                } catch (err) {
+                    console.error("Erreur lors de l'accès aux caméras:", err);
+                    return null;
+                }
+            }
             
             // Fonction pour traiter les données du code-barres
             function processBarcodeData(data) {
@@ -253,27 +296,38 @@
                     emitter = "Autre émetteur";
                 }
                 
-                return { amount, emitter };
+                return { amount, emitter, code: data };
             }
             
             // Démarrer le scanner
-            function startScanner() {
+            async function startScanner() {
                 if (!isScanning) {
-                    html5QrcodeScanner = new Html5QrcodeScanner(
-                        "reader", 
-                        { 
-                            fps: 10, 
-                            qrbox: { width: 250, height: 150 },
-                            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE, Html5QrcodeScanType.SCAN_TYPE_BARCODE]
-                        },
-                        false
-                    );
-                    
-                    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-                    isScanning = true;
-                    toggleScannerBtn.textContent = "Arrêter le Scanner";
-                    scannerStatus.textContent = "En cours de scan...";
-                    scannerStatus.style.color = "#2575fc";
+                    try {
+                        // Obtenir l'ID de la caméra arrière
+                        if (backCamera) {
+                            currentCameraId = await getBackCameraId();
+                        }
+                        
+                        html5QrcodeScanner = new Html5QrcodeScanner(
+                            "reader", 
+                            { 
+                                fps: 10, 
+                                qrbox: { width: 250, height: 150 },
+                                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_QR_CODE, Html5QrcodeScanType.SCAN_TYPE_BARCODE]
+                            },
+                            false
+                        );
+                        
+                        html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+                        isScanning = true;
+                        toggleScannerBtn.textContent = "Arrêter le Scanner";
+                        scannerStatus.textContent = "En cours de scan...";
+                        scannerStatus.style.color = "#2575fc";
+                    } catch (err) {
+                        console.error("Erreur lors du démarrage du scanner:", err);
+                        scannerStatus.textContent = "Erreur: Impossible d'accéder à la caméra";
+                        scannerStatus.style.color = "#ff4d4d";
+                    }
                 }
             }
             
@@ -288,6 +342,17 @@
                     }).catch(err => {
                         console.error("Erreur lors de l'arrêt du scanner:", err);
                     });
+                }
+            }
+            
+            // Changer de caméra
+            async function switchCamera() {
+                if (isScanning) {
+                    stopScanner();
+                    backCamera = !backCamera;
+                    setTimeout(startScanner, 500);
+                } else {
+                    backCamera = !backCamera;
                 }
             }
             
@@ -338,6 +403,9 @@
                     startScanner();
                 }
             });
+            
+            // Bouton pour changer de caméra
+            switchCameraBtn.addEventListener('click', switchCamera);
             
             // Démarrer automatiquement le scanner au chargement de la page
             startScanner();
