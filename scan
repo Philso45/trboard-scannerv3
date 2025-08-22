@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scanner Ticket Restaurant</title>
+  <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    video {
+      width: 100%;
+      max-width: 400px;
+      border: 2px solid #333;
+      border-radius: 10px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.2em;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Scanner Ticket Restaurant</h1>
+  <video id="video" playsinline></video>
+  <div id="result">Passez un ticket devant la caméra...</div>
+
+  <script>
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+    const videoElement = document.getElementById('video');
+    const resultElement = document.getElementById('result');
+
+    // Liste des émetteurs simplifiée (à adapter selon tes tickets)
+    const emetteurs = [
+      {prefix: "4270", name: "Edenred"},
+      {prefix: "5399", name: "Sodexo"},
+      {prefix: "5000", name: "UP"},
+      {prefix: "7000", name: "Swile"}
+    ];
+
+    function decodeTicket(ticketCode) {
+      let emetteur = "Inconnu";
+      for (let e of emetteurs) {
+        if (ticketCode.startsWith(e.prefix)) {
+          emetteur = e.name;
+          break;
+        }
+      }
+      // On suppose que les 3 derniers chiffres = montant en centimes
+      let montant = parseInt(ticketCode.slice(-3)) / 100;
+      return {emetteur, montant};
+    }
+
+    // Démarrage du scanner
+    codeReader
+      .listVideoInputDevices()
+      .then(videoInputDevices => {
+        if(videoInputDevices.length === 0){
+          resultElement.textContent = "Aucune caméra détectée.";
+          return;
+        }
+        const selectedDeviceId = videoInputDevices[0].deviceId;
+        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
+          if (result) {
+            const info = decodeTicket(result.text);
+            resultElement.innerHTML = `
+              <strong>Émetteur :</strong> ${info.emetteur} <br>
+              <strong>Montant :</strong> ${info.montant.toFixed(2)} €
+            `;
+          }
+          if (err && !(err instanceof ZXing.NotFoundException)) {
+            console.error(err);
+          }
+        });
+      })
+      .catch(err => {
+        console.error(err);
+        resultElement.textContent = "Erreur lors de l'accès à la caméra.";
+      });
+  </script>
+</body>
+</html>
