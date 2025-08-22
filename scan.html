@@ -134,13 +134,15 @@
       text-align: center;
       margin: 15px 0;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
     
     .tickets-container {
       flex: 1;
       overflow-y: auto;
       margin-top: 10px;
+      max-height: 200px;
     }
     
     .ticket-item {
@@ -235,6 +237,16 @@
       color: #666;
       margin-top: 5px;
     }
+    
+    .success-message {
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      text-align: center;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -266,6 +278,7 @@
     </div>
     
     <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
     
     <button class="button" id="toggleScanner">Arrêter le Scanner</button>
     
@@ -286,9 +299,10 @@
     </div>
     
     <button class="button button-secondary" id="exportButton">Exporter pour Glide</button>
+    <button class="button" id="clearButton" style="background: #f44336; margin-top: 10px;">Effacer tous les tickets</button>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/error_1.ogg"></audio>
   </div>
 
   <script>
@@ -307,6 +321,8 @@
       const yearSelector = document.getElementById('year');
       const exportButton = document.getElementById('exportButton');
       const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
+      const clearButton = document.getElementById('clearButton');
       
       let codeReader = null;
       let isScanning = true;
@@ -331,13 +347,18 @@
       function updateTicketsList() {
         ticketsContainer.innerHTML = '';
         
+        if (scannedTickets.length === 0) {
+          ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Aucun ticket scanné</div>';
+          return;
+        }
+        
         scannedTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
             <div class="ticket-info">
               <div>${ticket.emitter}</div>
-              <div class="ticket-id">ID: ${ticket.id}</div>
+              <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
             </div>
             <div class="ticket-amount">${ticket.amount} €</div>
           `;
@@ -345,6 +366,17 @@
         });
         
         updateTotalAmount();
+      }
+      
+      // Effacer tous les tickets
+      function clearAllTickets() {
+        if (confirm("Êtes-vous sûr de vouloir effacer tous les tickets scannés ?")) {
+          scannedTickets = [];
+          scannedIds = new Set();
+          localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+          updateTicketsList();
+          showSuccess("Tous les tickets ont été effacés");
+        }
       }
       
       updateTicketsList();
@@ -389,7 +421,7 @@
           emitter, 
           year: selectedYear,
           code: data,
-          date: new Date().toISOString().split('T')[0] // Date du scan
+          date: new Date().toLocaleDateString('fr-FR') // Date du scan au format français
         };
       }
       
@@ -431,6 +463,16 @@
         
         setTimeout(() => {
           errorMessage.style.display = 'none';
+        }, 3000);
+      }
+      
+      // Afficher un message de succès
+      function showSuccess(message) {
+        successMessage.textContent = message;
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+          successMessage.style.display = 'none';
         }, 3000);
       }
       
@@ -483,6 +525,8 @@
               scannerStatus.textContent = "Ticket scanné avec succès!";
               scannerStatus.style.color = "#4caf50";
               
+              showSuccess("Ticket scanné avec succès!");
+              
               // Fermer automatiquement après 2 secondes
               setTimeout(() => {
                 // Fermer la fenêtre (fonctionne si la page a été ouverte via window.open)
@@ -533,6 +577,8 @@
                 scannerStatus.textContent = "Ticket scanné avec succès!";
                 scannerStatus.style.color = "#4caf50";
                 
+                showSuccess("Ticket scanné avec succès!");
+                
                 setTimeout(() => {
                   if (window.opener || window.history.length > 1) {
                     window.close();
@@ -580,6 +626,9 @@
       
       // Bouton d'exportation
       exportButton.addEventListener('click', exportToGlide);
+      
+      // Bouton pour effacer tous les tickets
+      clearButton.addEventListener('click', clearAllTickets);
       
       // Démarrer automatiquement le scanner au chargement de la page
       startScanner();
