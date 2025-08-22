@@ -134,15 +134,13 @@
       text-align: center;
       margin: 15px 0;
       font-weight: bold;
-      font-size: 20px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      font-size: 18px;
     }
     
     .tickets-container {
       flex: 1;
       overflow-y: auto;
       margin-top: 10px;
-      max-height: 200px;
     }
     
     .ticket-item {
@@ -185,10 +183,6 @@
     
     .button-secondary {
       background: #6a11cb;
-    }
-    
-    .button-danger {
-      background: #f44336;
     }
     
     .scanner-status {
@@ -236,49 +230,10 @@
       display: none;
     }
     
-    .success-message {
-      background-color: #e8f5e9;
-      color: #2e7d32;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-      text-align: center;
-      display: none;
-    }
-    
     .ticket-id {
       font-size: 12px;
       color: #666;
       margin-top: 5px;
-    }
-    
-    .confirmation-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 100;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .modal-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      max-width: 400px;
-      width: 90%;
-      text-align: center;
-    }
-    
-    .modal-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 20px;
     }
   </style>
 </head>
@@ -311,7 +266,6 @@
     </div>
     
     <div class="error-message" id="errorMessage"></div>
-    <div class="success-message" id="successMessage"></div>
     
     <button class="button" id="toggleScanner">Arrêter le Scanner</button>
     
@@ -332,21 +286,9 @@
     </div>
     
     <button class="button button-secondary" id="exportButton">Exporter pour Glide</button>
-    <button class="button button-danger" id="clearButton">Supprimer tous les tickets</button>
-    
-    <div class="confirmation-modal" id="confirmationModal">
-      <div class="modal-content">
-        <h3>Confirmation</h3>
-        <p>Êtes-vous sûr de vouloir supprimer tous les tickets ? Cette action est irréversible.</p>
-        <div class="modal-buttons">
-          <button class="button" id="confirmDelete">Oui, supprimer</button>
-          <button class="button button-secondary" id="cancelDelete">Annuler</button>
-        </div>
-      </div>
-    </div>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
-    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/error_1.ogg"></audio>
+    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
   </div>
 
   <script>
@@ -365,11 +307,6 @@
       const yearSelector = document.getElementById('year');
       const exportButton = document.getElementById('exportButton');
       const errorMessage = document.getElementById('errorMessage');
-      const successMessage = document.getElementById('successMessage');
-      const clearButton = document.getElementById('clearButton');
-      const confirmationModal = document.getElementById('confirmationModal');
-      const confirmDelete = document.getElementById('confirmDelete');
-      const cancelDelete = document.getElementById('cancelDelete');
       
       let codeReader = null;
       let isScanning = true;
@@ -394,18 +331,13 @@
       function updateTicketsList() {
         ticketsContainer.innerHTML = '';
         
-        if (scannedTickets.length === 0) {
-          ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Aucun ticket scanné</div>';
-          return;
-        }
-        
         scannedTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
             <div class="ticket-info">
               <div>${ticket.emitter}</div>
-              <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+              <div class="ticket-id">ID: ${ticket.id}</div>
             </div>
             <div class="ticket-amount">${ticket.amount} €</div>
           `;
@@ -415,32 +347,11 @@
         updateTotalAmount();
       }
       
-      // Afficher le modal de confirmation
-      function showConfirmationModal() {
-        confirmationModal.style.display = 'flex';
-      }
-      
-      // Cacher le modal de confirmation
-      function hideConfirmationModal() {
-        confirmationModal.style.display = 'none';
-      }
-      
-      // Effacer tous les tickets
-      function clearAllTickets() {
-        scannedTickets = [];
-        scannedIds = new Set();
-        localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-        updateTicketsList();
-        showSuccess("Tous les tickets ont été supprimés");
-        hideConfirmationModal();
-      }
-      
       updateTicketsList();
       
       // Fonction pour traiter les données du code-barres selon vos spécifications
       function processBarcodeData(data) {
-        // Vérifier si le code-barres est valide (au moins 20 caractères)
-        if (!data || data.length < 20) {
+        if (data.length < 20) {
           return { error: "Code-barres invalide" };
         }
         
@@ -454,29 +365,11 @@
         
         // Extraire les caractères 13 à 16 (index 12 à 15)
         const amountDigits = data.substring(12, 16);
-        
-        // Vérifier que ce sont bien des chiffres
-        if (!/^\d+$/.test(amountDigits)) {
-          return { error: "Code-barres invalide" };
-        }
-        
         // Convertir en décimal avec 2 chiffres après la virgule
-        const amountValue = parseInt(amountDigits);
-        if (isNaN(amountValue)) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        const amount = (amountValue / 100).toFixed(2).replace('.', ',');
+        const amount = (parseInt(amountDigits) / 100).toFixed(2).replace('.', ',');
         
         // Extraire les caractères 17 à 18 (index 16 à 17)
-        const emitterCodeStr = data.substring(16, 18);
-        
-        // Vérifier que ce sont bien des chiffres
-        if (!/^\d+$/.test(emitterCodeStr)) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        const emitterCode = parseInt(emitterCodeStr);
+        const emitterCode = parseInt(data.substring(16, 18));
         let emitter = "Inconnu";
         
         // Déterminer l'émetteur selon les spécifications
@@ -496,7 +389,7 @@
           emitter, 
           year: selectedYear,
           code: data,
-          date: new Date().toLocaleDateString('fr-FR') // Date du scan au format français
+          date: new Date().toISOString().split('T')[0] // Date du scan
         };
       }
       
@@ -538,16 +431,6 @@
         
         setTimeout(() => {
           errorMessage.style.display = 'none';
-        }, 3000);
-      }
-      
-      // Afficher un message de succès
-      function showSuccess(message) {
-        successMessage.textContent = message;
-        successMessage.style.display = 'block';
-        
-        setTimeout(() => {
-          successMessage.style.display = 'none';
         }, 3000);
       }
       
@@ -600,8 +483,6 @@
               scannerStatus.textContent = "Ticket scanné avec succès!";
               scannerStatus.style.color = "#4caf50";
               
-              showSuccess("Ticket scanné avec succès!");
-              
               // Fermer automatiquement après 2 secondes
               setTimeout(() => {
                 // Fermer la fenêtre (fonctionne si la page a été ouverte via window.open)
@@ -652,8 +533,6 @@
                 scannerStatus.textContent = "Ticket scanné avec succès!";
                 scannerStatus.style.color = "#4caf50";
                 
-                showSuccess("Ticket scanné avec succès!");
-                
                 setTimeout(() => {
                   if (window.opener || window.history.length > 1) {
                     window.close();
@@ -701,15 +580,6 @@
       
       // Bouton d'exportation
       exportButton.addEventListener('click', exportToGlide);
-      
-      // Bouton pour demander la confirmation de suppression
-      clearButton.addEventListener('click', showConfirmationModal);
-      
-      // Confirmation de suppression
-      confirmDelete.addEventListener('click', clearAllTickets);
-      
-      // Annulation de suppression
-      cancelDelete.addEventListener('click', hideConfirmationModal);
       
       // Démarrer automatiquement le scanner au chargement de la page
       startScanner();
