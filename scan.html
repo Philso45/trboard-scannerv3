@@ -32,6 +32,9 @@
       max-width: 500px;
       overflow: hidden;
       padding: 20px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
     }
     
     header {
@@ -77,7 +80,7 @@
     
     .scanner-container {
       width: 100%;
-      height: 300px;
+      height: 250px;
       margin-bottom: 20px;
       border-radius: 10px;
       overflow: hidden;
@@ -123,11 +126,21 @@
       border-radius: 8px;
     }
     
-    .ticket-list {
-      width: 100%;
-      margin-top: 20px;
-      max-height: 200px;
+    .total-amount {
+      background-color: #2575fc;
+      color: white;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      margin: 15px 0;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .tickets-container {
+      flex: 1;
       overflow-y: auto;
+      margin-top: 10px;
     }
     
     .ticket-item {
@@ -137,6 +150,16 @@
       border-radius: 8px;
       display: flex;
       justify-content: space-between;
+      border-left: 4px solid #2575fc;
+    }
+    
+    .ticket-info {
+      flex: 1;
+    }
+    
+    .ticket-amount {
+      font-weight: bold;
+      color: #2575fc;
     }
     
     .button {
@@ -156,6 +179,10 @@
       background: #1c64e0;
       transform: translateY(-2px);
       box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button-secondary {
+      background: #6a11cb;
     }
     
     .scanner-status {
@@ -193,12 +220,20 @@
       z-index: 5;
     }
     
-    .glide-help {
-      margin-top: 20px;
-      padding: 15px;
-      background-color: #f0f7ff;
-      border-radius: 10px;
-      font-size: 14px;
+    .error-message {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      text-align: center;
+      display: none;
+    }
+    
+    .ticket-id {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -230,6 +265,8 @@
       <div class="scan-line"></div>
     </div>
     
+    <div class="error-message" id="errorMessage"></div>
+    
     <button class="button" id="toggleScanner">Arrêter le Scanner</button>
     
     <div class="result-container" id="resultContainer">
@@ -239,68 +276,91 @@
       <div class="result-item" id="yearResult">Année: </div>
     </div>
     
-    <div class="history-title">Derniers tickets scannés</div>
-    <div class="ticket-list" id="ticketList">
+    <div class="total-amount" id="totalAmount">
+      Total: 0,00 €
+    </div>
+    
+    <div class="history-title">Tickets scannés</div>
+    <div class="tickets-container" id="ticketsContainer">
       <!-- Les tickets scannés apparaîtront ici -->
     </div>
     
-    <div class="glide-help">
-      <strong>Pour Glide :</strong> Les données sont enregistrées dans le stockage local de votre navigateur. Pour les importer dans Glide, utilisez l'option d'importation de données et sélectionnez le fichier d'exportation.
-    </div>
-    
-    <button class="button" id="exportButton">Exporter pour Glide</button>
+    <button class="button button-secondary" id="exportButton">Exporter pour Glide</button>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+    <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const video = document.getElementById('video');
       const beep = document.getElementById('beep');
+      const errorSound = document.getElementById('errorSound');
       const toggleScannerBtn = document.getElementById('toggleScanner');
       const resultContainer = document.getElementById('resultContainer');
       const amountResult = document.getElementById('amountResult');
       const emitterResult = document.getElementById('emitterResult');
       const yearResult = document.getElementById('yearResult');
-      const ticketList = document.getElementById('ticketList');
+      const ticketsContainer = document.getElementById('ticketsContainer');
+      const totalAmountElement = document.getElementById('totalAmount');
       const scannerStatus = document.getElementById('scannerStatus');
       const yearSelector = document.getElementById('year');
       const exportButton = document.getElementById('exportButton');
+      const errorMessage = document.getElementById('errorMessage');
       
       let codeReader = null;
       let isScanning = true;
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
       let selectedYear = yearSelector.value;
+      let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
       
       // Mettre à jour l'année sélectionnée
       yearSelector.addEventListener('change', function() {
         selectedYear = this.value;
       });
       
-      // Afficher l'historique des tickets scannés
-      function updateTicketList() {
-        ticketList.innerHTML = '';
-        // Afficher seulement les 5 derniers tickets
-        const recentTickets = scannedTickets.slice(-5);
+      // Calculer et afficher le montant total
+      function updateTotalAmount() {
+        const total = scannedTickets.reduce((sum, ticket) => {
+          return sum + parseFloat(ticket.amount.replace(',', '.'));
+        }, 0);
+        totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+      }
+      
+      // Afficher la liste des tickets
+      function updateTicketsList() {
+        ticketsContainer.innerHTML = '';
         
-        recentTickets.forEach(ticket => {
+        scannedTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
-            <div>${ticket.emitter}</div>
-            <div>${ticket.amount} € (${ticket.year})</div>
+            <div class="ticket-info">
+              <div>${ticket.emitter}</div>
+              <div class="ticket-id">ID: ${ticket.id}</div>
+            </div>
+            <div class="ticket-amount">${ticket.amount} €</div>
           `;
-          ticketList.appendChild(ticketElement);
+          ticketsContainer.appendChild(ticketElement);
         });
+        
+        updateTotalAmount();
       }
       
-      updateTicketList();
+      updateTicketsList();
       
       // Fonction pour traiter les données du code-barres selon vos spécifications
       function processBarcodeData(data) {
         if (data.length < 20) {
-          scannerStatus.textContent = "Code-barres invalide";
-          return null;
+          return { error: "Code-barres invalide" };
+        }
+        
+        // Extraire l'identifiant unique (11 premiers caractères)
+        const ticketId = data.substring(0, 11);
+        
+        // Vérifier si le ticket a déjà été scanné
+        if (scannedIds.has(ticketId)) {
+          return { error: "Ce ticket a déjà été scanné" };
         }
         
         // Extraire les caractères 13 à 16 (index 12 à 15)
@@ -324,6 +384,7 @@
         }
         
         return { 
+          id: ticketId,
           amount, 
           emitter, 
           year: selectedYear,
@@ -340,9 +401,9 @@
         }
         
         // Convertir en CSV
-        const headers = "Émetteur,Montant,Année,Code,Date\n";
+        const headers = "Émetteur,Montant,Année,Code,Date,ID\n";
         const csvContent = scannedTickets.map(ticket => {
-          return `${ticket.emitter},${ticket.amount},${ticket.year},${ticket.code},${ticket.date}`;
+          return `${ticket.emitter},${ticket.amount},${ticket.year},${ticket.code},${ticket.date},${ticket.id}`;
         }).join("\n");
         
         const fullCsv = headers + csvContent;
@@ -360,6 +421,17 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+      }
+      
+      // Afficher un message d'erreur
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        errorSound.play();
+        
+        setTimeout(() => {
+          errorMessage.style.display = 'none';
+        }, 3000);
       }
       
       // Démarrer le scanner
@@ -386,33 +458,38 @@
           
           codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
             if (result) {
-              beep.play();
-              
               const ticketData = processBarcodeData(result.text);
               
-              if (ticketData) {
-                // Afficher les résultats
-                amountResult.textContent = `Montant: ${ticketData.amount} €`;
-                emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
-                yearResult.textContent = `Année: ${ticketData.year}`;
-                resultContainer.style.display = 'block';
-                
-                // Sauvegarder le ticket
-                scannedTickets.push(ticketData);
-                localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-                updateTicketList();
-                
-                scannerStatus.textContent = "Ticket scanné avec succès!";
-                scannerStatus.style.color = "#4caf50";
-                
-                // Fermer automatiquement après 2 secondes
-                setTimeout(() => {
-                  // Fermer la fenêtre (fonctionne si la page a été ouverte via window.open)
-                  if (window.opener || window.history.length > 1) {
-                    window.close();
-                  }
-                }, 2000);
+              if (ticketData.error) {
+                showError(ticketData.error);
+                return;
               }
+              
+              // Jouer le bip sonore
+              beep.play();
+              
+              // Afficher les résultats
+              amountResult.textContent = `Montant: ${ticketData.amount} €`;
+              emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
+              yearResult.textContent = `Année: ${ticketData.year}`;
+              resultContainer.style.display = 'block';
+              
+              // Sauvegarder le ticket
+              scannedTickets.push(ticketData);
+              scannedIds.add(ticketData.id);
+              localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+              updateTicketsList();
+              
+              scannerStatus.textContent = "Ticket scanné avec succès!";
+              scannerStatus.style.color = "#4caf50";
+              
+              // Fermer automatiquement après 2 secondes
+              setTimeout(() => {
+                // Fermer la fenêtre (fonctionne si la page a été ouverte via window.open)
+                if (window.opener || window.history.length > 1) {
+                  window.close();
+                }
+              }, 2000);
             }
           }, hints);
           
@@ -434,29 +511,33 @@
             codeReader = new ZXing.BrowserBarcodeReader();
             codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
               if (result) {
-                beep.play();
-                
                 const ticketData = processBarcodeData(result.text);
                 
-                if (ticketData) {
-                  amountResult.textContent = `Montant: ${ticketData.amount} €`;
-                  emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
-                  yearResult.textContent = `Année: ${ticketData.year}`;
-                  resultContainer.style.display = 'block';
-                  
-                  scannedTickets.push(ticketData);
-                  localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-                  updateTicketList();
-                  
-                  scannerStatus.textContent = "Ticket scanné avec succès!";
-                  scannerStatus.style.color = "#4caf50";
-                  
-                  setTimeout(() => {
-                    if (window.opener || window.history.length > 1) {
-                      window.close();
-                    }
-                  }, 2000);
+                if (ticketData.error) {
+                  showError(ticketData.error);
+                  return;
                 }
+                
+                beep.play();
+                
+                amountResult.textContent = `Montant: ${ticketData.amount} €`;
+                emitterResult.textContent = `Émetteur: ${ticketData.emitter}`;
+                yearResult.textContent = `Année: ${ticketData.year}`;
+                resultContainer.style.display = 'block';
+                
+                scannedTickets.push(ticketData);
+                scannedIds.add(ticketData.id);
+                localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                updateTicketsList();
+                
+                scannerStatus.textContent = "Ticket scanné avec succès!";
+                scannerStatus.style.color = "#4caf50";
+                
+                setTimeout(() => {
+                  if (window.opener || window.history.length > 1) {
+                    window.close();
+                  }
+                }, 2000);
               }
             });
             
