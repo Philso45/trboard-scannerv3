@@ -24,16 +24,23 @@ const emetteurs = [
   {prefix:"7000", name:"Swile"}
 ];
 
+// Fonction pour décoder le ticket
 function decodeTicket(code){
   if(code.length !== 20) return {emetteur:"Inconnu", montant:"0,00", annee:"Inconnue"};
+  
   let emetteur = "Inconnu";
   for(let e of emetteurs){
     if(code.startsWith(e.prefix)) emetteur=e.name;
   }
+
+  // Montant : positions 13-16 (indices 12 à 15)
   const euros = parseInt(code.slice(12,14));
   const centimes = parseInt(code.slice(14,16));
   const montant = `${euros},${centimes.toString().padStart(2,'0')} €`;
+
+  // Année : positions 17-20
   const annee = code.slice(16,20);
+
   return {emetteur, montant, annee};
 }
 
@@ -64,7 +71,7 @@ html5QrCode.start(
     }).catch(err => console.error("Erreur arrêt scanner :", err));
   },
   (errorMessage) => {
-    // on ignore les erreurs de lecture temporaires
+    // Erreurs de lecture temporaires ignorées
   }
 ).catch(err => {
   document.getElementById("result").textContent = "Impossible d'accéder à la caméra arrière";
