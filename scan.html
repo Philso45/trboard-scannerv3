@@ -147,6 +147,19 @@
       font-size: 20px;
     }
     
+    .emitter-totals {
+      margin: 15px 0;
+    }
+    
+    .emitter-total {
+      background-color: #e8f4ff;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    
     .ticket-list {
       width: 100%;
       margin-top: 20px;
@@ -224,7 +237,7 @@
     
     <div class="scanner-status" id="scannerStatus">Démarrage de la caméra...</div>
     
-    <div class="scanner-container">
+    <div class="scanner-container" id="scannerContainer">
       <video id="video" autoplay playsinline></video>
       <div id="frame"></div>
       <div class="scan-line"></div>
@@ -234,6 +247,10 @@
     
     <div class="total-amount" id="totalAmount">
       Total: 0,00 €
+    </div>
+    
+    <div class="emitter-totals" id="emitterTotals">
+      <!-- Les totaux par émetteur apparaîtront ici -->
     </div>
     
     <div class="ticket-list" id="ticketList">
@@ -253,17 +270,21 @@
       const beep = document.getElementById('beep');
       const errorSound = document.getElementById('errorSound');
       const toggleScannerBtn = document.getElementById('toggleScanner');
+      const scannerContainer = document.getElementById('scannerContainer');
       const ticketsContainer = document.getElementById('ticketList');
       const totalAmountElement = document.getElementById('totalAmount');
+      const emitterTotalsElement = document.getElementById('emitterTotals');
       const scannerStatus = document.getElementById('scannerStatus');
       const yearSelector = document.getElementById('year');
       const errorMessage = document.getElementById('errorMessage');
       const clearButton = document.getElementById('clearButton');
       
+      let codeReader = null;
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
       let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
       let selectedYear = yearSelector.value;
       let isScanning = true;
+      let stream = null;
       
       // Mettre à jour l'année sélectionnée
       yearSelector.addEventListener('change', function() {
@@ -271,11 +292,33 @@
       });
       
       // Calculer et afficher le montant total
-      function updateTotalAmount() {
+      function updateTotals() {
+        // Calcul du total général
         const total = scannedTickets.reduce((sum, ticket) => {
           return sum + parseFloat(ticket.amount.replace(',', '.'));
         }, 0);
         totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+        
+        // Calcul des totaux par émetteur
+        const emitterTotals = {};
+        scannedTickets.forEach(ticket => {
+          if (!emitterTotals[ticket.emitter]) {
+            emitterTotals[ticket.emitter] = 0;
+          }
+          emitterTotals[ticket.emitter] += parseFloat(ticket.amount.replace(',', '.'));
+        });
+        
+        // Affichage des totaux par émetteur
+        emitterTotalsElement.innerHTML = '';
+        for (const emitter in emitterTotals) {
+          const emitterElement = document.createElement('div');
+          emitterElement.className = 'emitter-total';
+          emitterElement.innerHTML = `
+            <div>${emitter}</div>
+            <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
+          `;
+          emitterTotalsElement.appendChild(emitterElement);
+        }
       }
       
       // Afficher la liste des tickets
@@ -287,7 +330,10 @@
           return;
         }
         
-        scannedTickets.forEach(ticket => {
+        // Trier les tickets par émetteur
+        const sortedTickets = [...scannedTickets].sort((a, b) => a.emitter.localeCompare(b.emitter));
+        
+        sortedTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
@@ -300,7 +346,7 @@
           ticketsContainer.appendChild(ticketElement);
         });
         
-        updateTotalAmount();
+        updateTotals();
       }
       
       // Effacer tous les tickets
@@ -310,6 +356,9 @@
           scannedIds = new Set();
           localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
           updateTicketsList();
+          // Remise à zéro du total
+          totalAmountElement.textContent = 'Total: 0,00 €';
+          emitterTotalsElement.innerHTML = '';
         }
       }
       
@@ -357,14 +406,14 @@
         const emitterCode = parseInt(emitterCodeStr);
         let emitter = "Inconnu";
         
-        // Déterminer l'émetteur selon les spécifications
-        if (emitterCode < 10) {
+        // Déterminer l'émetteur selon les nouvelles spécifications
+        if (emitterCode < 20) {
           emitter = "UpDéjeuner";
-        } else if (emitterCode < 20) {
+        } else if (emitterCode >= 20 && emitterCode < 30) {
           emitter = "Edenred";
-        } else if (emitterCode < 30) {
+        } else if (emitterCode >= 30 && emitterCode < 40) {
           emitter = "Bimpli";
-        } else if (emitterCode < 40) {
+        } else if (emitterCode >= 40) {
           emitter = "Pluxee";
         }
         
@@ -389,16 +438,49 @@
         }, 3000);
       }
       
+      // Arrêter le scanner
+      function stopScanner() {
+        if (isScanning) {
+          isScanning = false;
+          toggleScannerBtn.textContent = "Démarrer le Scanner";
+          scannerStatus.textContent = "Scanner arrêté";
+          scannerStatus.style.color = "#ff4d4d";
+          
+          // Masquer le conteneur du scanner
+          scannerContainer.style.display = 'none';
+          
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+          }
+          
+          if (codeReader) {
+            codeReader.reset();
+            codeReader = null;
+          }
+        }
+      }
+      
       // Démarrer le scanner
       async function startScanner() {
+        if (isScanning) return;
+        
+        isScanning = true;
+        toggleScannerBtn.textContent = "Arrêter le Scanner";
+        scannerStatus.textContent = "Démarrage de la caméra...";
+        scannerStatus.style.color = "#2575fc";
+        
+        // Afficher le conteneur du scanner
+        scannerContainer.style.display = 'block';
+        
         try {
           // Essayer d'abord avec la caméra arrière
-          const stream = await navigator.mediaDevices.getUserMedia({
+          stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: "environment" }
           });
           video.srcObject = stream;
           
-          const codeReader = new ZXing.BrowserBarcodeReader();
+          codeReader = new ZXing.BrowserBarcodeReader();
           
           codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
             if (result) {
@@ -438,10 +520,10 @@
           
           // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
           try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
             
-            const codeReader = new ZXing.BrowserBarcodeReader();
+            codeReader = new ZXing.BrowserBarcodeReader();
             codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
               if (result) {
                 const ticketData = processBarcodeData(result.text);
@@ -477,28 +559,19 @@
             scannerStatus.textContent = "Impossible d'accéder à la caméra";
             scannerStatus.style.color = "#ff4d4d";
             showError("Autorisez l'accès à la caméra pour utiliser le scanner");
+            stopScanner();
           }
-        }
-      }
-      
-      // Arrêter le scanner
-      function stopScanner() {
-        if (isScanning) {
-          isScanning = false;
-          toggleScannerBtn.textContent = "Démarrer le Scanner";
-          scannerStatus.textContent = "Scanner arrêté";
-          scannerStatus.style.color = "#ff4d4d";
-          
-          if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-          }
-        } else {
-          startScanner();
         }
       }
       
       // Bouton pour démarrer/arrêter le scanner
-      toggleScannerBtn.addEventListener('click', stopScanner);
+      toggleScannerBtn.addEventListener('click', function() {
+        if (isScanning) {
+          stopScanner();
+        } else {
+          startScanner();
+        }
+      });
       
       // Bouton pour effacer tous les tickets
       clearButton.addEventListener('click', clearAllTickets);
