@@ -23,7 +23,6 @@
       border: 2px solid #333;
       border-radius: 10px;
     }
-    /* Zone de capture visible pour aider l'utilisateur */
     #scan-area {
       position: absolute;
       top: 40%;
@@ -62,6 +61,10 @@
     ];
 
     function decodeTicket(ticketCode) {
+      if(ticketCode.length !== 20){
+        return {emetteur: "Inconnu", montant: 0, annee: "Inconnue"};
+      }
+
       let emetteur = "Inconnu";
       for (let e of emetteurs) {
         if (ticketCode.startsWith(e.prefix)) {
@@ -69,18 +72,21 @@
           break;
         }
       }
-      let montant = parseInt(ticketCode.slice(-3)) / 100;
-      return {emetteur, montant};
+
+      let montantCentimes = parseInt(ticketCode.slice(11, 16));
+      let montant = montantCentimes / 100;
+      let annee = ticketCode.slice(16, 20);
+
+      return {emetteur, montant, annee};
     }
 
-    // On force la caméra arrière via facingMode
+    // Accès caméra arrière
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
       .then(stream => {
         videoElement.srcObject = stream;
         videoElement.setAttribute("playsinline", true);
         videoElement.play();
 
-        // On crée un interval pour lire le code-barres dans la zone centrale
         const captureCanvas = document.createElement("canvas");
         const ctx = captureCanvas.getContext("2d");
 
@@ -89,7 +95,6 @@
           const videoHeight = videoElement.videoHeight;
           if (!videoWidth || !videoHeight) return;
 
-          // Zone de capture centrée (20% de la hauteur)
           const sx = videoWidth * 0.15;
           const sy = videoHeight * 0.4;
           const sw = videoWidth * 0.7;
@@ -106,13 +111,30 @@
             const result = reader.decode(bitmap);
             if (result) {
               const info = decodeTicket(result.getText());
-              resultElement.innerHTML = `<strong>Émetteur :</strong> ${info.emetteur} <br><strong>Montant :</strong> ${info.montant.toFixed(2)} €`;
+
+              // Optionnel : afficher brièvement avant retour
+              resultElement.innerHTML = `
+                <strong>Émetteur :</strong> ${info.emetteur} <br>
+                <strong>Montant :</strong> ${info.montant.toFixed(2)} € <br>
+                <strong>Année :</strong> ${info.annee}
+              `;
+
+              // Stop caméra et intervalle
+              clearInterval(scanInterval);
+              const tracks = videoElement.srcObject.getTracks();
+              tracks.forEach(track => track.stop());
+
+              // Retour automatique à l'écran précédent pour rescanner
+              setTimeout(() => {
+                window.history.back(); // ou navigation spécifique à ton app
+              }, 500); // petit délai pour que l'utilisateur voie le résultat
             }
           } catch (err) {
-            // Aucun code-barres détecté, pas d'erreur affichée
+            // Pas de code-barres détecté, on ignore
           }
 
-        }, 200); // toutes les 200ms
+        }, 200);
+
       })
       .catch(err => {
         console.error(err);
