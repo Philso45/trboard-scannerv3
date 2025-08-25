@@ -3,19 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scanner Tickets Restaurant</title>
+  <title>ScanTicket Pro - Scanner de Tickets Restaurant</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    :root {
+      --primary: #2563EB;
+      --primary-dark: #1E40AF;
+      --secondary: #F8FAFC;
+      --accent: #10B981;
+      --danger: #EF4444;
+      --dark: #1E293B;
+      --light: #F1F5F9;
+      --gray: #64748B;
+    }
+    
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
     
     body {
-      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-      color: #333;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: var(--dark);
       min-height: 100vh;
       padding: 20px;
       display: flex;
@@ -24,14 +36,79 @@
       justify-content: center;
     }
     
-    .container {
-      background-color: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    /* Écran de chargement */
+    #splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .logo {
+      width: 120px;
+      height: 120px;
+      background: var(--secondary);
+      border-radius: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      margin-bottom: 30px;
+      animation: pulse 1.5s infinite alternate;
+    }
+    
+    .logo i {
+      font-size: 50px;
+      color: var(--primary);
+    }
+    
+    .app-name {
+      color: white;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    
+    .progress-bar {
+      width: 280px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: var(--secondary);
+      border-radius: 3px;
+      transition: width 3s ease-in-out;
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
+    }
+    
+    /* Container principal */
+    .container {
+      background-color: var(--secondary);
+      border-radius: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      width: 95%;
       max-width: 500px;
       overflow: hidden;
-      padding: 20px;
+      padding: 24px;
+      display: none;
     }
     
     header {
@@ -39,19 +116,40 @@
       margin-bottom: 20px;
     }
     
+    .app-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
     h1 {
-      color: #2575fc;
+      color: var(--primary);
       font-size: 24px;
-      margin-bottom: 10px;
+      font-weight: 700;
+    }
+    
+    .title-icon {
+      background: var(--primary);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .instructions {
-      background-color: #f0f7ff;
-      padding: 15px;
-      border-radius: 10px;
+      background-color: var(--light);
+      padding: 16px;
+      border-radius: 16px;
       margin-bottom: 20px;
       font-size: 14px;
       line-height: 1.5;
+      color: var(--gray);
+      text-align: center;
     }
     
     .year-selector {
@@ -62,28 +160,49 @@
     .year-selector label {
       display: block;
       margin-bottom: 8px;
-      font-weight: bold;
-      color: #2575fc;
+      font-weight: 600;
+      color: var(--primary);
     }
     
     .year-selector select {
-      padding: 10px 15px;
+      padding: 12px 20px;
       border-radius: 50px;
-      border: 2px solid #2575fc;
+      border: 2px solid var(--primary);
       font-size: 16px;
       background-color: white;
-      color: #333;
+      color: var(--dark);
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+    
+    .year-selector select:focus {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+    
+    .scanner-status {
+      text-align: center;
+      margin: 16px 0;
+      font-weight: 600;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     
     .scanner-container {
       width: 100%;
-      height: 300px;
+      height: 280px;
       margin-bottom: 20px;
-      border-radius: 10px;
+      border-radius: 20px;
       overflow: hidden;
       position: relative;
-      border: 2px solid #2575fc;
+      border: 2px solid var(--primary);
       background-color: #000;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      display: none;
     }
     
     #video {
@@ -92,14 +211,70 @@
       object-fit: cover;
     }
     
+    .scan-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .scan-frame {
+      position: absolute;
+      border: 2px solid var(--accent);
+      width: 80%;
+      height: 30%;
+      top: 35%;
+      left: 10%;
+      border-radius: 16px;
+      box-sizing: border-box;
+    }
+    
     .scan-line {
       position: absolute;
       height: 2px;
       width: 100%;
-      background: #2575fc;
+      background: var(--accent);
       top: 50%;
       animation: scan 2s linear infinite;
-      z-index: 10;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    
+    .scan-corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border: 3px solid var(--accent);
+    }
+    
+    .corner-tl {
+      top: -3px;
+      left: -3px;
+      border-right: none;
+      border-bottom: none;
+    }
+    
+    .corner-tr {
+      top: -3px;
+      right: -3px;
+      border-left: none;
+      border-bottom: none;
+    }
+    
+    .corner-bl {
+      bottom: -3px;
+      left: -3px;
+      border-right: none;
+      border-top: none;
+    }
+    
+    .corner-br {
+      bottom: -3px;
+      right: -3px;
+      border-left: none;
+      border-top: none;
     }
     
     @keyframes scan {
@@ -108,114 +283,293 @@
       100% { top: 10%; }
     }
     
-    #frame {
-      position: absolute;
-      border: 3px solid red;
-      width: 80%;
-      height: 25%;
-      top: 37.5%;
-      left: 10%;
-      border-radius: 10px;
-      box-sizing: border-box;
-      z-index: 15;
-      pointer-events: none;
+    /* Logos des émetteurs */
+    .emitter-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-right: 12px;
+      flex-shrink: 0;
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    
+    .logo-edenerd {
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Edenred_logo.svg/320px-Edenred_logo.svg.png');
+      background-color: white;
+      padding: 3px;
+    }
+    
+    .logo-up {
+      background-image: url('https://upload.wikimedia.org/wikipedia/fr/thumb/4/4f/Logo_Up.svg/320px-Logo_Up.svg.png');
+      background-color: white;
+    }
+    
+    .logo-bimpli {
+      background-image: url('https://www.bimpli.com/images/logo.png');
+      background-color: #834d9b;
+      padding: 5px;
+    }
+    
+    .logo-pluxee {
+      background-image: url('https://www.pluxee.com/images/pluxee-logo.png');
+      background-color: white;
+      padding: 3px;
+    }
+    
+    .logo-unknown {
+      background: linear-gradient(135deg, #64748B 0%, #94a3b8 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: white;
+    }
+    
+    .ticket-content {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+    
+    .stats-container {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin: 16px 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     
     .total-amount {
-      background-color: #2575fc;
+      background-color: var(--primary);
       color: white;
-      padding: 15px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 16px;
       text-align: center;
-      margin: 15px 0;
-      font-weight: bold;
+      margin-bottom: 16px;
+      font-weight: 700;
       font-size: 20px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
     }
     
     .emitter-totals {
-      margin: 15px 0;
+      margin: 16px 0;
     }
     
     .emitter-total {
-      background-color: #e8f4ff;
-      padding: 10px;
-      border-radius: 8px;
+      background-color: var(--light);
+      padding: 12px 16px;
+      border-radius: 12px;
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      font-weight: 500;
+    }
+    
+    .emitter-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .emitter-badge {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
     }
     
     .ticket-list {
       width: 100%;
-      margin-top: 20px;
+      margin-top: 16px;
       max-height: 200px;
       overflow-y: auto;
+      border-radius: 12px;
+      background: white;
+      padding: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
     
     .ticket-item {
-      background-color: #f0f7ff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
+      background-color: var(--light);
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 12px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    
+    .ticket-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .ticket-info {
+      flex: 1;
+    }
+    
+    .ticket-emitter {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    
+    .ticket-details {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--gray);
+    }
+    
+    .ticket-amount {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 16px;
+    }
+    
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
     }
     
     .button {
-      background: #2575fc;
+      background: var(--primary);
       color: white;
       border: none;
-      padding: 12px 20px;
+      padding: 16px 24px;
       border-radius: 50px;
       font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      margin-top: 15px;
       width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
     
-    .button-danger {
-      background: #f44336;
+    .button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+    
+    .button:active {
+      transform: translateY(0);
     }
     
     .button-success {
-      background: #4caf50;
+      background: var(--accent);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
     
-    .scanner-status {
-      text-align: center;
-      margin: 10px 0;
-      font-weight: bold;
-      color: #2575fc;
+    .button-success:hover {
+      background: #0D9D6E;
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    
+    .button-danger {
+      background: var(--danger);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+    
+    .button-danger:hover {
+      background: #DC2626;
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
     }
     
     .error-message {
-      background-color: #ffebee;
-      color: #c62828;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
+      background-color: #FEF2F2;
+      color: var(--danger);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin: 12px 0;
       text-align: center;
       display: none;
+      font-weight: 500;
+      border-left: 4px solid var(--danger);
     }
     
-    .ticket-id {
+    .success-message {
+      background-color: #F0FDF4;
+      color: var(--accent);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin: 12px 0;
+      text-align: center;
+      display: none;
+      font-weight: 500;
+      border-left: 4px solid var(--accent);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: var(--gray);
+    }
+    
+    .empty-state i {
+      font-size: 40px;
+      margin-bottom: 16px;
+      color: var(--light);
+    }
+    
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
       font-size: 12px;
-      color: #666;
-      margin-top: 5px;
+      font-weight: 600;
+    }
+    
+    .badge-success {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+    
+    .badge-danger {
+      background: #FEE2E2;
+      color: #991B1B;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- Écran de chargement -->
+  <div id="splash-screen">
+    <div class="logo">
+      <i class="fas fa-receipt"></i>
+    </div>
+    <h1 class="app-name">ScanTicket Pro</h1>
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <!-- Application principale -->
+  <div class="container" id="app-container">
     <header>
-      <h1>Scanner de Tickets Restaurant</h1>
+      <div class="app-title">
+        <div class="title-icon">
+          <i class="fas fa-receipt"></i>
+        </div>
+        <h1>ScanTicket Pro</h1>
+      </div>
       <div class="instructions">
-        Placez le code-barres du ticket restaurant dans le cadre rouge. L'application détectera automatiquement le code.
+        <i class="fas fa-info-circle"></i> Positionnez le code-barres dans le cadre pour scanner automatiquement
       </div>
     </header>
     
     <div class="year-selector">
-      <label for="year">Année des tickets :</label>
+      <label for="year">Année des tickets</label>
       <select id="year">
         <option value="2024">2024</option>
         <option value="2025" selected>2025</option>
@@ -224,38 +578,110 @@
       </select>
     </div>
     
-    <div class="scanner-status" id="scannerStatus">Démarrage de la caméra...</div>
+    <div class="scanner-status" id="scannerStatus">
+      <i class="fas fa-camera"></i>
+      <span>Scanner arrêté - Prêt à l'emploi</span>
+    </div>
     
     <div class="scanner-container" id="scannerContainer">
       <video id="video" autoplay playsinline></video>
-      <div id="frame"></div>
-      <div class="scan-line"></div>
+      <div class="scan-overlay">
+        <div class="scan-frame">
+          <div class="scan-line"></div>
+          <div class="scan-corner corner-tl"></div>
+          <div class="scan-corner corner-tr"></div>
+          <div class="scan-corner corner-bl"></div>
+          <div class="scan-corner corner-br"></div>
+        </div>
+      </div>
     </div>
     
     <div class="error-message" id="errorMessage"></div>
+    <div class="success-message" id="successMessage"></div>
     
-    <div class="total-amount" id="totalAmount">
-      Total: 0,00 €
-    </div>
-    
-    <div class="emitter-totals" id="emitterTotals">
-      <!-- Les totaux par émetteur apparaîtront ici -->
+    <div class="stats-container">
+      <div class="total-amount" id="totalAmount">
+        <i class="fas fa-receipt"></i> Total: 0,00 €
+      </div>
+      
+      <div class="emitter-totals" id="emitterTotals">
+        <!-- Les totaux par émetteur apparaîtront ici -->
+      </div>
     </div>
     
     <div class="ticket-list" id="ticketList">
-      <!-- Les tickets scannés apparaîtront ici -->
+      <div class="empty-state">
+        <i class="fas fa-receipt"></i>
+        <p>Aucun ticket scanné</p>
+        <p class="badge badge-success">En attente de scan</p>
+      </div>
     </div>
     
-    <button class="button" id="toggleScanner">Arrêter le Scanner</button>
-    <button class="button button-success" id="exportButton">Exporter en CSV</button>
-    <button class="button button-danger" id="clearButton">Supprimer tous les tickets</button>
+    <div class="buttons-container">
+      <button class="button" id="toggleScanner">
+        <i class="fas fa-camera"></i> Démarrer le Scanner
+      </button>
+      <button class="button button-success" id="exportButton">
+        <i class="fas fa-file-export"></i> Exporter en CSV
+      </button>
+      <button class="button button-danger" id="clearButton">
+        <i class="fas fa-trash-alt"></i> Supprimer tous les tickets
+      </button>
+    </div>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
     <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/error_1.ogg"></audio>
   </div>
 
   <script>
+    // Gestion de l'écran de chargement
     document.addEventListener('DOMContentLoaded', function() {
+      const splashScreen = document.getElementById('splash-screen');
+      const appContainer = document.getElementById('app-container');
+      const progressBar = document.getElementById('progress');
+      
+      // Démarrer l'animation de la barre de progression
+      setTimeout(() => {
+        progressBar.style.width = '100%';
+      }, 100);
+      
+      // Cacher l'écran de chargement après 3 secondes
+      setTimeout(() => {
+        splashScreen.style.opacity = '0';
+        setTimeout(() => {
+          splashScreen.style.display = 'none';
+          appContainer.style.display = 'block';
+          initializeApp();
+        }, 500);
+      }, 3000);
+    });
+    
+    // Fonction pour obtenir la classe CSS du logo en fonction de l'émetteur
+    function getEmitterLogo(emitter) {
+      const emitterLogos = {
+        "Edenred": "logo-edenerd",
+        "Up Déjeuner": "logo-up", 
+        "Bimpli": "logo-bimpli",
+        "Pluxee": "logo-pluxee"
+      };
+      
+      return emitterLogos[emitter] || "logo-unknown";
+    }
+    
+    // Fonction pour obtenir l'abréviation à afficher dans le logo (seulement pour les émetteurs inconnus)
+    function getEmitterAbbreviation(emitter) {
+      const emitterAbbr = {
+        "Edenred": "ED",
+        "Up Déjeuner": "UP",
+        "Bimpli": "BI", 
+        "Pluxee": "PL"
+      };
+      
+      return emitterAbbr[emitter] || "TR";
+    }
+    
+    // Initialisation de l'application
+    function initializeApp() {
       const video = document.getElementById('video');
       const beep = document.getElementById('beep');
       const errorSound = document.getElementById('errorSound');
@@ -267,6 +693,7 @@
       const scannerStatus = document.getElementById('scannerStatus');
       const yearSelector = document.getElementById('year');
       const errorMessage = document.getElementById('errorMessage');
+      const successMessage = document.getElementById('successMessage');
       const clearButton = document.getElementById('clearButton');
       const exportButton = document.getElementById('exportButton');
       
@@ -274,7 +701,7 @@
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
       let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
       let selectedYear = yearSelector.value;
-      let isScanning = true;
+      let isScanning = false;
       let stream = null;
       
       // Mettre à jour l'année sélectionnée
@@ -305,23 +732,37 @@
           const emitterElement = document.createElement('div');
           emitterElement.className = 'emitter-total';
           emitterElement.innerHTML = `
-            <div>${emitter}</div>
-            <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
+            <div class="emitter-name">
+              <div class="emitter-badge" style="background: ${getEmitterColor(emitter)}"></div>
+              <div>${emitter}</div>
+            </div>
+            <div class="emitter-amount">${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
           `;
           emitterTotalsElement.appendChild(emitterElement);
         }
+      }
+      
+      // Fonction pour obtenir la couleur associée à un émetteur
+      function getEmitterColor(emitter) {
+        const emitterColors = {
+          "Edenred": "#FF6B6B",
+          "Up Déjeuner": "#4ECDC4", 
+          "Bimpli": "#834d9b",
+          "Pluxee": "#2b5876"
+        };
+        
+        return emitterColors[emitter] || "#64748B";
       }
       
       // Afficher la liste des tickets (sans défilement automatique)
       function updateTicketsList() {
         // Sauvegarder la position de défilement actuelle
         const scrollPosition = ticketsContainer.scrollTop;
-        const shouldScroll = ticketsContainer.scrollHeight - ticketsContainer.scrollTop === ticketsContainer.clientHeight;
         
         ticketsContainer.innerHTML = '';
         
         if (scannedTickets.length === 0) {
-          ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Aucun ticket scanné</div>';
+          ticketsContainer.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><p>Aucun ticket scanné</p><p class="badge badge-success">En attente de scan</p></div>';
           return;
         }
         
@@ -331,10 +772,20 @@
         sortedTickets.forEach(ticket => {
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
+          
+          const logoClass = getEmitterLogo(ticket.emitter);
+          const isUnknown = logoClass === "logo-unknown";
+          
           ticketElement.innerHTML = `
-            <div class="ticket-info">
-              <div>${ticket.emitter}</div>
-              <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+            <div class="ticket-content">
+              <div class="emitter-logo ${logoClass}">${isUnknown ? getEmitterAbbreviation(ticket.emitter) : ''}</div>
+              <div class="ticket-info">
+                <div class="ticket-emitter">${ticket.emitter}</div>
+                <div class="ticket-details">
+                  <span class="ticket-id">ID: ${ticket.id}</span>
+                  <span>${ticket.date}</span>
+                </div>
+              </div>
             </div>
             <div class="ticket-amount">${ticket.amount} €</div>
           `;
@@ -357,6 +808,7 @@
           // Remise à zéro du total
           totalAmountElement.textContent = 'Total: 0,00 €';
           emitterTotalsElement.innerHTML = '';
+          showSuccess("Tous les tickets ont été supprimés");
         }
       }
       
@@ -397,9 +849,9 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        
+        showSuccess("Fichier CSV exporté avec succès");
       }
-      
-      updateTicketsList();
       
       // Fonction pour traiter les données du code-barres
       function processBarcodeData(data) {
@@ -445,7 +897,7 @@
         
         // Déterminer l'émetteur selon les nouvelles spécifications
         if (emitterCode < 20) {
-          emitter = "UpDéjeuner";
+          emitter = "Up Déjeuner";
         } else if (emitterCode >= 20 && emitterCode < 30) {
           emitter = "Edenred";
         } else if (emitterCode >= 30 && emitterCode < 40) {
@@ -475,12 +927,22 @@
         }, 3000);
       }
       
+      // Afficher un message de succès
+      function showSuccess(message) {
+        successMessage.textContent = message;
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+          successMessage.style.display = 'none';
+        }, 3000);
+      }
+      
       // Arrêter le scanner
       function stopScanner() {
         if (isScanning) {
           isScanning = false;
-          toggleScannerBtn.textContent = "Démarrer le Scanner";
-          scannerStatus.textContent = "Scanner arrêté";
+          toggleScannerBtn.innerHTML = '<i class="fas fa-camera"></i> Démarrer le Scanner';
+          scannerStatus.innerHTML = '<i class="fas fa-camera"></i><span>Scanner arrêté</span>';
           scannerStatus.style.color = "#ff4d4d";
           
           // Masquer le conteneur du scanner
@@ -503,8 +965,8 @@
         if (isScanning) return;
         
         isScanning = true;
-        toggleScannerBtn.textContent = "Arrêter le Scanner";
-        scannerStatus.textContent = "Démarrage de la caméra...";
+        toggleScannerBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter le Scanner';
+        scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Démarrage de la caméra...</span>';
         scannerStatus.style.color = "#2575fc";
         
         // Afficher le conteneur du scanner
@@ -537,8 +999,10 @@
               localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
               updateTicketsList();
               
-              scannerStatus.textContent = "Ticket scanné avec succès!";
+              scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Ticket scanné avec succès!</span>';
               scannerStatus.style.color = "#4caf50";
+              
+              showSuccess("Ticket scanné avec succès!");
               
               // Fermer automatiquement après 2 secondes
               setTimeout(() => {
@@ -549,12 +1013,12 @@
             }
           });
           
-          scannerStatus.textContent = "En cours de scan...";
+          scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>En cours de scan...</span>';
           scannerStatus.style.color = "#2575fc";
           
         } catch (e) {
           console.error("Erreur caméra arrière:", e);
-          scannerStatus.textContent = "Erreur caméra: " + e.message;
+          scannerStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Erreur caméra: ' + e.message + '</span>';
           scannerStatus.style.color = "#ff4d4d";
           
           // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
@@ -579,8 +1043,10 @@
                 localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
                 updateTicketsList();
                 
-                scannerStatus.textContent = "Ticket scanné avec succès!";
+                scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Ticket scanné avec succès!</span>';
                 scannerStatus.style.color = "#4caf50";
+                
+                showSuccess("Ticket scanné avec succès!");
                 
                 setTimeout(() => {
                   if (window.opener || window.history.length > 1) {
@@ -590,12 +1056,12 @@
               }
             });
             
-            scannerStatus.textContent = "Utilisation de la caméra avant...";
+            scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Utilisation de la caméra avant...</span>';
             scannerStatus.style.color = "#2575fc";
             
           } catch (err) {
             console.error("Erreur caméra avant:", err);
-            scannerStatus.textContent = "Impossible d'accéder à la caméra";
+            scannerStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i><span>Impossible d\'accéder à la caméra</span>';
             scannerStatus.style.color = "#ff4d4d";
             showError("Autorisez l'accès à la caméra pour utiliser le scanner");
             stopScanner();
