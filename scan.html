@@ -6,6 +6,42 @@
   <title>Scanner Tickets Restaurant</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
   <style>
+    /* Écran de chargement */
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    
+    .loader {
+      width: 60px;
+      height: 60px;
+      border: 5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: white;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    
+    /* Reste du CSS existant */
     * {
       margin: 0;
       padding: 0;
@@ -143,6 +179,19 @@
       margin-bottom: 8px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+    }
+    
+    .emitter-logo {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      margin-right: 10px;
+    }
+    
+    .emitter-info {
+      display: flex;
+      align-items: center;
     }
     
     .ticket-list {
@@ -159,6 +208,7 @@
       border-radius: 8px;
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
     
     .button {
@@ -206,7 +256,13 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <!-- Écran de chargement -->
+  <div id="loading-screen">
+    <div class="loader"></div>
+    <div class="loading-text">Chargement de l'application...</div>
+  </div>
+
+  <div class="container" style="display: none;">
     <header>
       <h1>Scanner de Tickets Restaurant</h1>
       <div class="instructions">
@@ -255,6 +311,15 @@
   </div>
 
   <script>
+    // Précharger les logos des émetteurs
+    const emitterLogos = {
+      "UpDéjeuner": "https://upload.wikimedia.org/wikipedia/fr/thumb/6/6e/Logo_Up_%28ex-Chèque_Déjeuner%29.svg/320px-Logo_Up_%28ex-Chèque_Déjeuner%29.svg.png",
+      "Edenred": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Edenred_logo.svg/320px-Edenred_logo.svg.png",
+      "Bimpli": "https://www.bimpli.com/hubfs/BIMPLI_2022/Images/logo-bimpli.png",
+      "Pluxee": "https://www.pluxee.com/content/dam/pluxee/fr/logo/pluxee-logo.svg",
+      "Inconnu": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItcXVlc3Rpb24tY2lyY2xlIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCI+PC9jaXJjbGU+PHBhdGggZD0iTTkuMDkgOWEzIDMgMCAwIDEgNS44MyAxYzAgMi0zIDMtMyAzIj48L3BhdGg+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ij48L2xpbmU+PC9zdmc+"
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
       const video = document.getElementById('video');
       const beep = document.getElementById('beep');
@@ -269,6 +334,8 @@
       const errorMessage = document.getElementById('errorMessage');
       const clearButton = document.getElementById('clearButton');
       const exportButton = document.getElementById('exportButton');
+      const loadingScreen = document.getElementById('loadingScreen');
+      const mainContainer = document.querySelector('.container');
       
       let codeReader = null;
       let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
@@ -276,6 +343,15 @@
       let selectedYear = yearSelector.value;
       let isScanning = true;
       let stream = null;
+      
+      // Fonction pour masquer l'écran de chargement
+      function hideLoadingScreen() {
+        loadingScreen.style.opacity = '0';
+        setTimeout(() => {
+          loadingScreen.style.display = 'none';
+          mainContainer.style.display = 'block';
+        }, 500);
+      }
       
       // Mettre à jour l'année sélectionnée
       yearSelector.addEventListener('change', function() {
@@ -305,7 +381,10 @@
           const emitterElement = document.createElement('div');
           emitterElement.className = 'emitter-total';
           emitterElement.innerHTML = `
-            <div>${emitter}</div>
+            <div class="emitter-info">
+              <img src="${emitterLogos[emitter]}" alt="${emitter}" class="emitter-logo">
+              <div>${emitter}</div>
+            </div>
             <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
           `;
           emitterTotalsElement.appendChild(emitterElement);
@@ -332,9 +411,12 @@
           const ticketElement = document.createElement('div');
           ticketElement.className = 'ticket-item';
           ticketElement.innerHTML = `
-            <div class="ticket-info">
-              <div>${ticket.emitter}</div>
-              <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+            <div class="emitter-info">
+              <img src="${emitterLogos[ticket.emitter]}" alt="${ticket.emitter}" class="emitter-logo">
+              <div class="ticket-info">
+                <div>${ticket.emitter}</div>
+                <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+              </div>
             </div>
             <div class="ticket-amount">${ticket.amount} €</div>
           `;
@@ -398,8 +480,6 @@
         link.click();
         document.body.removeChild(link);
       }
-      
-      updateTicketsList();
       
       // Fonction pour traiter les données du code-barres
       function processBarcodeData(data) {
@@ -618,8 +698,19 @@
       // Bouton pour exporter en CSV
       exportButton.addEventListener('click', exportToCSV);
       
-      // Démarrer automatiquement le scanner au chargement de la page
-      startScanner();
+      // Initialiser l'application
+      function initApp() {
+        updateTicketsList();
+        
+        // Masquer l'écran de chargement après un court délai
+        setTimeout(hideLoadingScreen, 1000);
+        
+        // Démarrer automatiquement le scanner
+        startScanner();
+      }
+      
+      // Démarrer l'application
+      initApp();
     });
   </script>
 </body>
