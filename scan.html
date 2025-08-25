@@ -3,9 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Scanner Tickets Restaurant</title>
+  <title>ScanTickets Pro | Application Professionnelle</title>
   <script src="https://unpkg.com/@zxing/library@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    :root {
+      --primary: #2c6bed;
+      --primary-dark: #1a56c7;
+      --secondary: #6a11cb;
+      --success: #28a745;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --light: #f8f9fa;
+      --dark: #212529;
+      --gray: #6c757d;
+      --gray-light: #e9ecef;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+      color: var(--dark);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
     /* Écran de chargement */
     #loading-screen {
       position: fixed;
@@ -13,7 +45,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -39,87 +71,113 @@
       color: white;
       margin-top: 20px;
       font-size: 18px;
+      font-weight: 500;
     }
     
-    /* Reste du CSS existant */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    
-    body {
-      background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-      color: #333;
-      min-height: 100vh;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    
+    /* Container principal */
     .container {
       background-color: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
       width: 100%;
-      max-width: 500px;
+      max-width: 520px;
       overflow: hidden;
+      padding: 0;
+    }
+    
+    /* Header */
+    .app-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .app-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .app-header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .app-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+    }
+    
+    /* Contenu */
+    .app-content {
       padding: 20px;
     }
     
-    header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    
-    h1 {
-      color: #2575fc;
-      font-size: 24px;
-      margin-bottom: 10px;
-    }
-    
+    /* Instructions */
     .instructions {
       background-color: #f0f7ff;
-      padding: 15px;
-      border-radius: 10px;
+      padding: 16px;
+      border-radius: 12px;
       margin-bottom: 20px;
       font-size: 14px;
       line-height: 1.5;
+      border-left: 4px solid var(--primary);
     }
     
-    .year-selector {
+    /* Sélecteur d'année */
+    .form-group {
       margin-bottom: 20px;
-      text-align: center;
     }
     
-    .year-selector label {
+    .form-group label {
       display: block;
       margin-bottom: 8px;
-      font-weight: bold;
-      color: #2575fc;
+      font-weight: 600;
+      color: var(--primary);
     }
     
-    .year-selector select {
-      padding: 10px 15px;
-      border-radius: 50px;
-      border: 2px solid #2575fc;
+    .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid var(--gray-light);
       font-size: 16px;
       background-color: white;
-      color: #333;
+      color: var(--dark);
+      transition: border-color 0.3s;
+    }
+    
+    .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    /* Scanner */
+    .scanner-status {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: 500;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
     
     .scanner-container {
       width: 100%;
-      height: 300px;
+      height: 280px;
       margin-bottom: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       position: relative;
-      border: 2px solid #2575fc;
+      border: 2px solid var(--primary);
       background-color: #000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
     
     #video {
@@ -132,10 +190,11 @@
       position: absolute;
       height: 2px;
       width: 100%;
-      background: #2575fc;
+      background: var(--primary);
       top: 50%;
       animation: scan 2s linear infinite;
       z-index: 10;
+      box-shadow: 0 0 10px var(--primary);
     }
     
     @keyframes scan {
@@ -146,7 +205,7 @@
     
     #frame {
       position: absolute;
-      border: 3px solid red;
+      border: 3px solid var(--danger);
       width: 80%;
       height: 25%;
       top: 37.5%;
@@ -157,101 +216,180 @@
       pointer-events: none;
     }
     
-    .total-amount {
-      background-color: #2575fc;
-      color: white;
-      padding: 15px;
+    /* Messages d'erreur */
+    .error-message {
+      background-color: #ffebee;
+      color: var(--danger);
+      padding: 12px;
       border-radius: 10px;
+      margin: 10px 0;
       text-align: center;
-      margin: 15px 0;
-      font-weight: bold;
-      font-size: 20px;
+      display: none;
+      font-weight: 500;
     }
     
+    /* Totaux */
+    .total-amount {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      margin: 20px 0;
+      font-weight: 600;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Émetteurs */
     .emitter-totals {
-      margin: 15px 0;
+      margin: 20px 0;
     }
     
     .emitter-total {
-      background-color: #e8f4ff;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 8px;
+      background-color: var(--gray-light);
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: transform 0.2s;
+    }
+    
+    .emitter-total:hover {
+      transform: translateY(-2px);
     }
     
     .emitter-logo {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       object-fit: contain;
-      margin-right: 10px;
+      margin-right: 12px;
+      border-radius: 6px;
+      background: white;
+      padding: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .emitter-info {
       display: flex;
       align-items: center;
+      font-weight: 500;
     }
     
+    /* Liste des tickets */
     .ticket-list {
       width: 100%;
       margin-top: 20px;
-      max-height: 200px;
+      max-height: 240px;
       overflow-y: auto;
+      border-radius: 12px;
+      border: 1px solid var(--gray-light);
     }
     
     .ticket-item {
-      background-color: #f0f7ff;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
+      background-color: white;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--gray-light);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background-color 0.2s;
     }
     
-    .button {
-      background: #2575fc;
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 50px;
-      font-size: 16px;
-      cursor: pointer;
-      margin-top: 15px;
-      width: 100%;
+    .ticket-item:last-child {
+      border-bottom: none;
     }
     
-    .button-danger {
-      background: #f44336;
-    }
-    
-    .button-success {
-      background: #4caf50;
-    }
-    
-    .scanner-status {
-      text-align: center;
-      margin: 10px 0;
-      font-weight: bold;
-      color: #2575fc;
-    }
-    
-    .error-message {
-      background-color: #ffebee;
-      color: #c62828;
-      padding: 10px;
-      border-radius: 8px;
-      margin: 10px 0;
-      text-align: center;
-      display: none;
+    .ticket-item:hover {
+      background-color: #f8f9fa;
     }
     
     .ticket-id {
       font-size: 12px;
-      color: #666;
-      margin-top: 5px;
+      color: var(--gray);
+      margin-top: 4px;
+    }
+    
+    .ticket-amount {
+      font-weight: 600;
+      color: var(--primary);
+    }
+    
+    /* Boutons */
+    .buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .button:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .button-danger {
+      background: var(--danger);
+    }
+    
+    .button-danger:hover {
+      background: #bd2130;
+    }
+    
+    .button-success {
+      background: var(--success);
+    }
+    
+    .button-success:hover {
+      background: #218838;
+    }
+    
+    /* Footer */
+    .app-footer {
+      background-color: #f8f9fa;
+      padding: 16px;
+      text-align: center;
+      color: var(--gray);
+      font-size: 12px;
+      border-top: 1px solid var(--gray-light);
+    }
+    
+    /* Responsive */
+    @media (max-width: 576px) {
+      .container {
+        border-radius: 12px;
+      }
+      
+      .app-header h1 {
+        font-size: 20px;
+      }
+      
+      .scanner-container {
+        height: 220px;
+      }
+      
+      .total-amount {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
@@ -259,52 +397,73 @@
   <!-- Écran de chargement -->
   <div id="loading-screen">
     <div class="loader"></div>
-    <div class="loading-text">Chargement de l'application...</div>
+    <div class="loading-text">Initialisation de l'application...</div>
   </div>
 
   <div class="container" style="display: none;">
-    <header>
-      <h1>Scanner de Tickets Restaurant</h1>
-      <div class="instructions">
-        Placez le code-barres du ticket restaurant dans le cadre rouge. L'application détectera automatiquement le code.
+    <div class="app-header">
+      <h1>ScanTickets Pro</h1>
+      <p>Application professionnelle de scan de tickets restaurant</p>
+      <div class="app-icon">
+        <i class="fas fa-receipt"></i>
       </div>
-    </header>
-    
-    <div class="year-selector">
-      <label for="year">Année des tickets :</label>
-      <select id="year">
-        <option value="2024">2024</option>
-        <option value="2025" selected>2025</option>
-        <option value="2026">2026</option>
-        <option value="2027">2027</option>
-      </select>
     </div>
     
-    <div class="scanner-status" id="scannerStatus">Démarrage de la caméra...</div>
-    
-    <div class="scanner-container" id="scannerContainer">
-      <video id="video" autoplay playsinline></video>
-      <div id="frame"></div>
-      <div class="scan-line"></div>
+    <div class="app-content">
+      <div class="instructions">
+        <i class="fas fa-info-circle"></i> Placez le code-barres du ticket restaurant dans le cadre rouge pour le scanner automatiquement.
+      </div>
+      
+      <div class="form-group">
+        <label for="year"><i class="fas fa-calendar-alt"></i> Année des tickets :</label>
+        <select id="year" class="form-select">
+          <option value="2024">2024</option>
+          <option value="2025" selected>2025</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
+      
+      <div class="scanner-status" id="scannerStatus">
+        <i class="fas fa-camera"></i> Démarrage de la caméra...
+      </div>
+      
+      <div class="scanner-container" id="scannerContainer">
+        <video id="video" autoplay playsinline></video>
+        <div id="frame"></div>
+        <div class="scan-line"></div>
+      </div>
+      
+      <div class="error-message" id="errorMessage"></div>
+      
+      <div class="total-amount" id="totalAmount">
+        <i class="fas fa-coins"></i> Total: 0,00 €
+      </div>
+      
+      <div class="emitter-totals" id="emitterTotals">
+        <!-- Les totaux par émetteur apparaîtront ici -->
+      </div>
+      
+      <div class="ticket-list" id="ticketList">
+        <!-- Les tickets scannés apparaîtront ici -->
+      </div>
+      
+      <div class="buttons-container">
+        <button class="button" id="toggleScanner">
+          <i class="fas fa-stop-circle"></i> Arrêter le Scanner
+        </button>
+        <button class="button button-success" id="exportButton">
+          <i class="fas fa-file-export"></i> Exporter en CSV
+        </button>
+        <button class="button button-danger" id="clearButton">
+          <i class="fas fa-trash-alt"></i> Supprimer tous les tickets
+        </button>
+      </div>
     </div>
     
-    <div class="error-message" id="errorMessage"></div>
-    
-    <div class="total-amount" id="totalAmount">
-      Total: 0,00 €
+    <div class="app-footer">
+      &copy; 2023 ScanTickets Pro - Tous droits réservés
     </div>
-    
-    <div class="emitter-totals" id="emitterTotals">
-      <!-- Les totaux par émetteur apparaîtront ici -->
-    </div>
-    
-    <div class="ticket-list" id="ticketList">
-      <!-- Les tickets scannés apparaîtront ici -->
-    </div>
-    
-    <button class="button" id="toggleScanner">Arrêter le Scanner</button>
-    <button class="button button-success" id="exportButton">Exporter en CSV</button>
-    <button class="button button-danger" id="clearButton">Supprimer tous les tickets</button>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
     <audio id="errorSound" src="https://actions.google.com/sounds/v1/alarms/error_1.ogg"></audio>
@@ -364,7 +523,7 @@
         const total = scannedTickets.reduce((sum, ticket) => {
           return sum + parseFloat(ticket.amount.replace(',', '.'));
         }, 0);
-        totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+        totalAmountElement.innerHTML = `<i class="fas fa-coins"></i> Total: ${total.toFixed(2).replace('.', ',')} €`;
         
         // Calcul des totaux par émetteur
         const emitterTotals = {};
@@ -391,16 +550,15 @@
         }
       }
       
-      // Afficher la liste des tickets (sans défilement automatique)
+      // Afficher la liste des tickets
       function updateTicketsList() {
         // Sauvegarder la position de défilement actuelle
         const scrollPosition = ticketsContainer.scrollTop;
-        const shouldScroll = ticketsContainer.scrollHeight - ticketsContainer.scrollTop === ticketsContainer.clientHeight;
         
         ticketsContainer.innerHTML = '';
         
         if (scannedTickets.length === 0) {
-          ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Aucun ticket scanné</div>';
+          ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;"><i class="fas fa-receipt"></i> Aucun ticket scanné</div>';
           return;
         }
         
@@ -436,9 +594,6 @@
           scannedIds = new Set();
           localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
           updateTicketsList();
-          // Remise à zéro du total
-          totalAmountElement.textContent = 'Total: 0,00 €';
-          emitterTotalsElement.innerHTML = '';
         }
       }
       
@@ -559,9 +714,9 @@
       function stopScanner() {
         if (isScanning) {
           isScanning = false;
-          toggleScannerBtn.textContent = "Démarrer le Scanner";
-          scannerStatus.textContent = "Scanner arrêté";
-          scannerStatus.style.color = "#ff4d4d";
+          toggleScannerBtn.innerHTML = '<i class="fas fa-play-circle"></i> Démarrer le Scanner';
+          scannerStatus.innerHTML = '<i class="fas fa-pause-circle"></i> Scanner arrêté';
+          scannerStatus.style.color = "var(--danger)";
           
           // Masquer le conteneur du scanner
           scannerContainer.style.display = 'none';
@@ -583,9 +738,9 @@
         if (isScanning) return;
         
         isScanning = true;
-        toggleScannerBtn.textContent = "Arrêter le Scanner";
-        scannerStatus.textContent = "Démarrage de la caméra...";
-        scannerStatus.style.color = "#2575fc";
+        toggleScannerBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter le Scanner';
+        scannerStatus.innerHTML = '<i class="fas fa-camera"></i> Démarrage de la caméra...';
+        scannerStatus.style.color = "var(--primary)";
         
         // Afficher le conteneur du scanner
         scannerContainer.style.display = 'block';
@@ -617,8 +772,8 @@
               localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
               updateTicketsList();
               
-              scannerStatus.textContent = "Ticket scanné avec succès!";
-              scannerStatus.style.color = "#4caf50";
+              scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+              scannerStatus.style.color = "var(--success)";
               
               // Fermer automatiquement après 2 secondes
               setTimeout(() => {
@@ -629,13 +784,13 @@
             }
           });
           
-          scannerStatus.textContent = "En cours de scan...";
-          scannerStatus.style.color = "#2575fc";
+          scannerStatus.innerHTML = '<i class="fas fa-search"></i> En cours de scan...';
+          scannerStatus.style.color = "var(--primary)";
           
         } catch (e) {
           console.error("Erreur caméra arrière:", e);
-          scannerStatus.textContent = "Erreur caméra: " + e.message;
-          scannerStatus.style.color = "#ff4d4d";
+          scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Erreur caméra: ' + e.message;
+          scannerStatus.style.color = "var(--danger)";
           
           // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
           try {
@@ -659,8 +814,8 @@
                 localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
                 updateTicketsList();
                 
-                scannerStatus.textContent = "Ticket scanné avec succès!";
-                scannerStatus.style.color = "#4caf50";
+                scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+                scannerStatus.style.color = "var(--success)";
                 
                 setTimeout(() => {
                   if (window.opener || window.history.length > 1) {
@@ -670,13 +825,13 @@
               }
             });
             
-            scannerStatus.textContent = "Utilisation de la caméra avant...";
-            scannerStatus.style.color = "#2575fc";
+            scannerStatus.innerHTML = '<i class="fas fa-mobile-alt"></i> Utilisation de la caméra avant...';
+            scannerStatus.style.color = "var(--primary)";
             
           } catch (err) {
             console.error("Erreur caméra avant:", err);
-            scannerStatus.textContent = "Impossible d'accéder à la caméra";
-            scannerStatus.style.color = "#ff4d4d";
+            scannerStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Impossible d\'accéder à la caméra';
+            scannerStatus.style.color = "var(--danger)";
             showError("Autorisez l'accès à la caméra pour utiliser le scanner");
             stopScanner();
           }
