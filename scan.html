@@ -38,68 +38,69 @@
       justify-content: center;
     }
     
-    /* Écran de chargement */
-     /* Écran de chargement */
-    #splash-screen {
+    /* Écran de chargement amélioré */
+    #loading-screen {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      z-index: 1000;
+      justify-content: center;
+      z-index: 9999;
       transition: opacity 0.5s ease-out;
     }
     
-    .logo {
+    .loading-logo {
       width: 120px;
       height: 120px;
-      background: var(--secondary);
-      border-radius: 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
       margin-bottom: 30px;
-      animation: pulse 1.5s infinite alternate;
+      border-radius: 20px;
+      background-color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     }
     
-    .logo i {
-      font-size: 50px;
+    .loading-logo i {
+      font-size: 60px;
       color: var(--primary);
     }
     
-    .app-name {
-      color: white;
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 40px;
-      text-align: center;
+    .progress-container {
+      width: 80%;
+      max-width: 300px;
+      height: 12px;
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
     }
     
     .progress-bar {
-      width: 280px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    
-    .progress {
       height: 100%;
       width: 0%;
-      background: var(--secondary);
-      border-radius: 3px;
-      transition: width 3s ease-in-out;
+      background-color: white;
+      border-radius: 10px;
+      transition: width 0.3s ease;
     }
     
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.05); }
+    .loading-text {
+      color: white;
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+    }
+    
+    .loading-subtext {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      margin-top: 5px;
     }
     
     /* Container principal */
@@ -111,6 +112,7 @@
       max-width: 520px;
       overflow: hidden;
       padding: 0;
+      display: none;
     }
     
     /* Header */
@@ -418,22 +420,32 @@
       .total-amount {
         font-size: 18px;
       }
+      
+      .loading-logo {
+        width: 100px;
+        height: 100px;
+      }
+      
+      .loading-logo i {
+        font-size: 50px;
+      }
     }
   </style>
 </head>
 <body>
- <!-- Écran de chargement -->
-  <div id="splash-screen">
-    <div class="logo">
+  <!-- Écran de chargement amélioré -->
+  <div id="loading-screen">
+    <div class="loading-logo">
       <i class="fas fa-receipt"></i>
     </div>
-    <h1 class="app-name">ScanTicket Pro</h1>
-    <div class="progress-bar">
-      <div class="progress" id="progress"></div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
     </div>
+    <div class="loading-text" id="loadingText">Initialisation de l'application...</div>
+    <div class="loading-subtext" id="loadingSubtext">0%</div>
   </div>
 
-  <div class="container" style="display: none;">
+  <div class="container">
     <div class="app-header">
       <h1>ScanTickets Pro</h1>
       <p>Application professionnelle de scan de tickets restaurant</p>
@@ -509,7 +521,7 @@
       "Edenred": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Edenred_logo.svg/320px-Edenred_logo.svg.png",
       "Bimpli": "https://www.bimpli.com/hubfs/BIMPLI_2022/Images/logo-bimpli.png",
       "Pluxee": "https://www.pluxee.com/content/dam/pluxee/fr/logo/pluxee-logo.svg",
-      "Inconnu": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJmZWF0aGVyIGZlYXRoZXItcXVlc3Rpb24tY2lyY2xlIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCI+PC9jaXJjbGU+PHBhdGggZD0iTTkuMDkgOWEzIDMgMCAwIDEgNS44MyAxYzAgMi0zIDMtMyAzIj48L3BhdGg+PGxpbmUgeDE9IjEyIiB5MT0iMTYiIHgyPSIxMi4wMSIgeTI9IjE2Ij48L2xpbmU+PC9zdmc+"
+      "Inconnu": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0iZmVhdGhlciBmZWF0aGVyLXF1ZXN0aW9uLWNpcmNsZSI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiPjwvY2lyY2xlPjxwYXRoIGQ9Ik05LjA5IDlhMyAzIDAgMCAxIDUuODMgMWMwIDItMyAzLTMgMyI+PC9wYXRoPjxsaW5lIHgxPSIxMiIgeTE9IjE2IiB4Mj0iMTIuMDEiIHkyPSIxNiI+PC9saW5lPjwvc3ZnPg=="
     };
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -527,6 +539,9 @@
       const clearButton = document.getElementById('clearButton');
       const exportButton = document.getElementById('exportButton');
       const loadingScreen = document.getElementById('loadingScreen');
+      const progressBar = document.getElementById('progressBar');
+      const loadingText = document.getElementById('loadingText');
+      const loadingSubtext = document.getElementById('loadingSubtext');
       const mainContainer = document.querySelector('.container');
       
       let codeReader = null;
@@ -536,27 +551,24 @@
       let isScanning = true;
       let stream = null;
       
-      // Gestion de l'écran de chargement
-    document.addEventListener('DOMContentLoaded', function() {
-      const splashScreen = document.getElementById('splash-screen');
-      const appContainer = document.getElementById('app-container');
-      const progressBar = document.getElementById('progress');
+      // Fonction pour mettre à jour la barre de progression
+      function updateProgress(percentage, text) {
+        progressBar.style.width = percentage + '%';
+        loadingSubtext.textContent = Math.round(percentage) + '%';
+        
+        if (text) {
+          loadingText.textContent = text;
+        }
+      }
       
-    // Démarrer l'animation de la barre de progression
-      setTimeout(() => {
-        progressBar.style.width = '100%';
-      }, 100);
-      
-       // Cacher l'écran de chargement après 3 secondes
-      setTimeout(() => {
-        splashScreen.style.opacity = '0';
+      // Fonction pour masquer l'écran de chargement
+      function hideLoadingScreen() {
+        loadingScreen.style.opacity = '0';
         setTimeout(() => {
-          splashScreen.style.display = 'none';
-          appContainer.style.display = 'block';
-          initializeApp();
+          loadingScreen.style.display = 'none';
+          mainContainer.style.display = 'block';
         }, 500);
-      }, 3000);
-    });
+      }
       
       // Mettre à jour l'année sélectionnée
       yearSelector.addEventListener('change', function() {
@@ -900,11 +912,30 @@
       exportButton.addEventListener('click', exportToCSV);
       
       // Initialiser l'application
-      function initApp() {
+      async function initApp() {
+        // Simuler le processus de chargement avec des étapes
+        updateProgress(10, "Chargement des composants...");
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        updateProgress(30, "Initialisation de l'interface...");
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        updateProgress(50, "Chargement des données...");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        updateProgress(70, "Préparation du scanner...");
+        await new Promise(resolve => setTimeout(resolve, 400));
+        
+        updateProgress(90, "Finalisation...");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        updateProgress(100, "Prêt!");
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         updateTicketsList();
         
-        // Masquer l'écran de chargement après un court délai
-        setTimeout(hideLoadingScreen, 1000);
+        // Masquer l'écran de chargement
+        hideLoadingScreen();
         
         // Démarrer automatiquement le scanner
         startScanner();
