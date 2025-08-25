@@ -16,6 +16,8 @@
       --dark: #1E293B;
       --light: #F1F5F9;
       --gray: #64748B;
+      --card-bg: #FFFFFF;
+      --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     }
     
     * {
@@ -101,9 +103,9 @@
     
     /* Container principal */
     .container {
-      background-color: var(--secondary);
+      background-color: var(--card-bg);
       border-radius: 24px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      box-shadow: var(--card-shadow);
       width: 95%;
       max-width: 500px;
       overflow: hidden;
@@ -201,8 +203,9 @@
       overflow: hidden;
       position: relative;
       border: 2px solid var(--primary);
-      background-color: #000;
+      background-color: #f1f5f9;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      display: none;
     }
     
     #video {
@@ -318,6 +321,13 @@
       font-weight: 500;
     }
     
+    .emitter-logo {
+      width: 30px;
+      height: 30px;
+      object-fit: contain;
+      margin-right: 10px;
+    }
+    
     .emitter-name {
       display: flex;
       align-items: center;
@@ -359,9 +369,13 @@
     
     .ticket-info {
       flex: 1;
+      display: flex;
+      align-items: center;
     }
     
     .ticket-emitter {
+      display: flex;
+      align-items: center;
       font-weight: 600;
       color: var(--primary);
       margin-bottom: 4px;
@@ -487,6 +501,19 @@
       background: #FEE2E2;
       color: #991B1B;
     }
+    
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -511,7 +538,7 @@
         <h1>ScanTicket Pro</h1>
       </div>
       <div class="instructions">
-        <i class="fas fa-info-circle"></i> Positionnez le code-barres dans le cadre pour scanner automatiquement
+        <i class="fas fa-info-circle"></i> Application professionnelle de scan de tickets restaurant
       </div>
     </header>
     
@@ -526,8 +553,8 @@
     </div>
     
     <div class="scanner-status" id="scannerStatus">
-      <i class="fas fa-circle-notch fa-spin"></i>
-      <span>Initialisation du scanner...</span>
+      <i class="fas fa-pause-circle"></i>
+      <span>Scanner arrêté - Prêt à l'emploi</span>
     </div>
     
     <div class="scanner-container" id="scannerContainer">
@@ -566,7 +593,7 @@
     
     <div class="buttons-container">
       <button class="button" id="toggleScanner">
-        <i class="fas fa-camera"></i> Arrêter le Scanner
+        <i class="fas fa-camera"></i> Démarrer le Scanner
       </button>
       <button class="button button-success" id="exportButton">
         <i class="fas fa-file-export"></i> Exporter en CSV
@@ -574,6 +601,11 @@
       <button class="button button-danger" id="clearButton">
         <i class="fas fa-trash-alt"></i> Supprimer tous les tickets
       </button>
+    </div>
+    
+    <div class="security-badge">
+      <i class="fas fa-lock"></i>
+      <span>Application sécurisée - Données stockées localement</span>
     </div>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
@@ -602,374 +634,410 @@
         }, 500);
       }, 3000);
     });
-    document.addEventListener('DOMContentLoaded', function() {
-  const video = document.getElementById('video');
-  const beep = document.getElementById('beep');
-  const errorSound = document.getElementById('errorSound');
-  const toggleScannerBtn = document.getElementById('toggleScanner');
-  const scannerContainer = document.getElementById('scannerContainer');
-  const ticketsContainer = document.getElementById('ticketList');
-  const totalAmountElement = document.getElementById('totalAmount');
-  const emitterTotalsElement = document.getElementById('emitterTotals');
-  const scannerStatus = document.getElementById('scannerStatus');
-  const yearSelector = document.getElementById('year');
-  const errorMessage = document.getElementById('errorMessage');
-  const clearButton = document.getElementById('clearButton');
-  const exportButton = document.getElementById('exportButton');
-  
-  let codeReader = null;
-  let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
-  let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
-  let selectedYear = yearSelector.value;
-  let isScanning = true;
-  let stream = null;
-  
-  // Mettre à jour l'année sélectionnée
-  yearSelector.addEventListener('change', function() {
-    selectedYear = this.value;
-  });
-  
-  // Calculer et afficher le montant total
-  function updateTotals() {
-    // Calcul du total général
-    const total = scannedTickets.reduce((sum, ticket) => {
-      return sum + parseFloat(ticket.amount.replace(',', '.'));
-    }, 0);
-    totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
     
-    // Calcul des totaux par émetteur
-    const emitterTotals = {};
-    scannedTickets.forEach(ticket => {
-      if (!emitterTotals[ticket.emitter]) {
-        emitterTotals[ticket.emitter] = 0;
-      }
-      emitterTotals[ticket.emitter] += parseFloat(ticket.amount.replace(',', '.'));
-    });
-    
-    // Affichage des totaux par émetteur
-    emitterTotalsElement.innerHTML = '';
-    for (const emitter in emitterTotals) {
-      const emitterElement = document.createElement('div');
-      emitterElement.className = 'emitter-total';
-      emitterElement.innerHTML = `
-        <div>${emitter}</div>
-        <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
-      `;
-      emitterTotalsElement.appendChild(emitterElement);
-    }
-  }
-  
-  // Afficher la liste des tickets (sans défilement automatique)
-  function updateTicketsList() {
-    // Sauvegarder la position de défilement actuelle
-    const scrollPosition = ticketsContainer.scrollTop;
-    
-    ticketsContainer.innerHTML = '';
-    
-    if (scannedTickets.length === 0) {
-      ticketsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Aucun ticket scanné</div>';
-      return;
-    }
-    
-    // Trier les tickets par émetteur
-    const sortedTickets = [...scannedTickets].sort((a, b) => a.emitter.localeCompare(b.emitter));
-    
-    sortedTickets.forEach(ticket => {
-      const ticketElement = document.createElement('div');
-      ticketElement.className = 'ticket-item';
-      ticketElement.innerHTML = `
-        <div class="ticket-info">
-          <div>${ticket.emitter}</div>
-          <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
-        </div>
-        <div class="ticket-amount">${ticket.amount} €</div>
-      `;
-      ticketsContainer.appendChild(ticketElement);
-    });
-    
-    // Restaurer la position de défilement
-    ticketsContainer.scrollTop = scrollPosition;
-    
-    updateTotals();
-  }
-  
-  // Effacer tous les tickets
-  function clearAllTickets() {
-    if (confirm("Êtes-vous sûr de vouloir supprimer tous les tickets scannés ?")) {
-      scannedTickets = [];
-      scannedIds = new Set();
-      localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-      updateTicketsList();
-      // Remise à zéro du total
-      totalAmountElement.textContent = 'Total: 0,00 €';
-      emitterTotalsElement.innerHTML = '';
-    }
-  }
-  
-  // Exporter les données en CSV
-  function exportToCSV() {
-    if (scannedTickets.length === 0) {
-      showError("Aucun ticket à exporter");
-      return;
-    }
-    
-    // Entêtes CSV
-    const headers = ["Émetteur", "Montant", "Année", "ID", "Date", "Code"];
-    let csvContent = headers.join(";") + "\n";
-    
-    // Données CSV
-    scannedTickets.forEach(ticket => {
-      const row = [
-        ticket.emitter,
-        ticket.amount,
-        ticket.year,
-        ticket.id,
-        ticket.date,
-        ticket.code
-      ];
-      csvContent += row.join(";") + "\n";
-    });
-    
-    // Créer un blob et un lien de téléchargement
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const date = new Date().toISOString().split('T')[0];
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", `tickets_restaurant_${date}.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-  
-  updateTicketsList();
-  
-  // Fonction pour traiter les données du code-barres
-  function processBarcodeData(data) {
-    // Vérifier si le code-barres est valide (au moins 20 caractères)
-    if (!data || data.length < 20) {
-      return { error: "Code-barres invalide" };
-    }
-    
-    // Extraire l'identifiant unique (11 premiers caractères)
-    const ticketId = data.substring(0, 11);
-    
-    // Vérifier si le ticket a déjà été scanné
-    if (scannedIds.has(ticketId)) {
-      return { error: "Ce ticket a déjà été scanné" };
-    }
-    
-    // Extraire les caractères 13 à 16 (index 12 à 15)
-    const amountDigits = data.substring(12, 16);
-    
-    // Vérifier que ce sont bien des chiffres
-    if (!/^\d+$/.test(amountDigits)) {
-      return { error: "Code-barres invalide" };
-    }
-    
-    // Convertir en décimal avec 2 chiffres après la virgule
-    const amountValue = parseInt(amountDigits);
-    if (isNaN(amountValue)) {
-      return { error: "Code-barres invalide" };
-    }
-    
-    const amount = (amountValue / 100).toFixed(2).replace('.', ',');
-    
-    // Extraire les caractères 17 à 18 (index 16 à 17)
-    const emitterCodeStr = data.substring(16, 18);
-    
-    // Vérifier que ce sont bien des chiffres
-    if (!/^\d+$/.test(emitterCodeStr)) {
-      return { error: "Code-barres invalide" };
-    }
-    
-    const emitterCode = parseInt(emitterCodeStr);
-    let emitter = "Inconnu";
-    
-    // Déterminer l'émetteur selon les nouvelles spécifications
-    if (emitterCode < 20) {
-      emitter = "UpDéjeuner";
-    } else if (emitterCode >= 20 && emitterCode < 30) {
-      emitter = "Edenred";
-    } else if (emitterCode >= 30 && emitterCode < 40) {
-      emitter = "Bimpli";
-    } else if (emitterCode >= 40) {
-      emitter = "Pluxee";
-    }
-    
-    return { 
-      id: ticketId,
-      amount, 
-      emitter, 
-      year: selectedYear,
-      code: data,
-      date: new Date().toLocaleDateString('fr-FR')
-    };
-  }
-  
-  // Afficher un message d'erreur
-  function showError(message) {
-    errorMessage.textContent = message;
-    errorMessage.style.display = 'block';
-    errorSound.play();
-    
-    setTimeout(() => {
-      errorMessage.style.display = 'none';
-    }, 3000);
-  }
-  
-  // Arrêter le scanner
-  function stopScanner() {
-    if (isScanning) {
-      isScanning = false;
-      toggleScannerBtn.textContent = "Démarrer le Scanner";
-      scannerStatus.textContent = "Scanner arrêté";
-      scannerStatus.style.color = "#ff4d4d";
+    function initializeApp() {
+      const video = document.getElementById('video');
+      const beep = document.getElementById('beep');
+      const errorSound = document.getElementById('errorSound');
+      const toggleScannerBtn = document.getElementById('toggleScanner');
+      const scannerContainer = document.getElementById('scannerContainer');
+      const ticketsContainer = document.getElementById('ticketList');
+      const totalAmountElement = document.getElementById('totalAmount');
+      const emitterTotalsElement = document.getElementById('emitterTotals');
+      const scannerStatus = document.getElementById('scannerStatus');
+      const yearSelector = document.getElementById('year');
+      const errorMessage = document.getElementById('errorMessage');
+      const clearButton = document.getElementById('clearButton');
+      const exportButton = document.getElementById('exportButton');
       
-      // Masquer le conteneur du scanner
-      scannerContainer.style.display = 'none';
+      let codeReader = null;
+      let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
+      let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
+      let selectedYear = yearSelector.value;
+      let isScanning = false;
+      let stream = null;
       
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-        stream = null;
-      }
+      // URLs des logos des émetteurs
+      const emitterLogos = {
+        "UpDéjeuner": "https://upload.wikimedia.org/wikipedia/fr/thumb/2/2a/Logo-up.png/320px-Logo-up.png",
+        "Edenred": "https://upload.wikimedia.org/wikipedia/fr/thumb/5/5d/Edenred_logo_2018.svg/320px-Edenred_logo_2018.svg.png",
+        "Bimpli": "https://www.bimpli.com/hubfs/Bimpli_Logo-1.png",
+        "Pluxee": "https://www.pluxee.com/content/dam/pluxee/fr/logo/pluxee-logo-rvb.png",
+        "Inconnu": "https://cdn-icons-png.flaticon.com/512/1178/1178471.png"
+      };
       
-      if (codeReader) {
-        codeReader.reset();
-        codeReader = null;
-      }
-    }
-  }
-  
-  // Démarrer le scanner
-  async function startScanner() {
-    if (isScanning) return;
-    
-    isScanning = true;
-    toggleScannerBtn.textContent = "Arrêter le Scanner";
-    scannerStatus.textContent = "Démarrage de la caméra...";
-    scannerStatus.style.color = "#2575fc";
-    
-    // Afficher le conteneur du scanner
-    scannerContainer.style.display = 'block';
-    
-    try {
-      // Essayer d'abord avec la caméra arrière
-      stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
+      // Mettre à jour l'année sélectionnée
+      yearSelector.addEventListener('change', function() {
+        selectedYear = this.value;
       });
-      video.srcObject = stream;
       
-      codeReader = new ZXing.BrowserBarcodeReader();
-      
-      codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-        if (result) {
-          const ticketData = processBarcodeData(result.text);
-          
-          if (ticketData.error) {
-            showError(ticketData.error);
-            return;
+      // Calculer et afficher le montant total
+      function updateTotals() {
+        // Calcul du total général
+        const total = scannedTickets.reduce((sum, ticket) => {
+          return sum + parseFloat(ticket.amount.replace(',', '.'));
+        }, 0);
+        totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+        
+        // Calcul des totaux par émetteur
+        const emitterTotals = {};
+        scannedTickets.forEach(ticket => {
+          if (!emitterTotals[ticket.emitter]) {
+            emitterTotals[ticket.emitter] = 0;
           }
-          
-          // Jouer le bip sonore
-          beep.play();
-          
-          // Sauvegarder le ticket
-          scannedTickets.push(ticketData);
-          scannedIds.add(ticketData.id);
+          emitterTotals[ticket.emitter] += parseFloat(ticket.amount.replace(',', '.'));
+        });
+        
+        // Affichage des totaux par émetteur
+        emitterTotalsElement.innerHTML = '';
+        for (const emitter in emitterTotals) {
+          const emitterElement = document.createElement('div');
+          emitterElement.className = 'emitter-total';
+          emitterElement.innerHTML = `
+            <div class="emitter-name">
+              <img src="${emitterLogos[emitter]}" alt="${emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
+              ${emitter}
+            </div>
+            <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
+          `;
+          emitterTotalsElement.appendChild(emitterElement);
+        }
+      }
+      
+      // Afficher la liste des tickets (sans défilement automatique)
+      function updateTicketsList() {
+        // Sauvegarder la position de défilement actuelle
+        const scrollPosition = ticketsContainer.scrollTop;
+        
+        ticketsContainer.innerHTML = '';
+        
+        if (scannedTickets.length === 0) {
+          ticketsContainer.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-receipt"></i>
+              <p>Aucun ticket scanné</p>
+              <p class="badge badge-success">En attente de scan</p>
+            </div>
+          `;
+          return;
+        }
+        
+        // Trier les tickets par émetteur
+        const sortedTickets = [...scannedTickets].sort((a, b) => a.emitter.localeCompare(b.emitter));
+        
+        sortedTickets.forEach(ticket => {
+          const ticketElement = document.createElement('div');
+          ticketElement.className = 'ticket-item';
+          ticketElement.innerHTML = `
+            <div class="ticket-info">
+              <div class="ticket-emitter">
+                <img src="${emitterLogos[ticket.emitter]}" alt="${ticket.emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
+                <div>
+                  <div>${ticket.emitter}</div>
+                  <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+                </div>
+              </div>
+            </div>
+            <div class="ticket-amount">${ticket.amount} €</div>
+          `;
+          ticketsContainer.appendChild(ticketElement);
+        });
+        
+        // Restaurer la position de défilement
+        ticketsContainer.scrollTop = scrollPosition;
+        
+        updateTotals();
+      }
+      
+      // Effacer tous les tickets
+      function clearAllTickets() {
+        if (confirm("Êtes-vous sûr de vouloir supprimer tous les tickets scannés ?")) {
+          scannedTickets = [];
+          scannedIds = new Set();
           localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
           updateTicketsList();
+          // Remise à zéro du total
+          totalAmountElement.textContent = 'Total: 0,00 €';
+          emitterTotalsElement.innerHTML = '';
+        }
+      }
+      
+      // Exporter les données en CSV
+      function exportToCSV() {
+        if (scannedTickets.length === 0) {
+          showError("Aucun ticket à exporter");
+          return;
+        }
+        
+        // Entêtes CSV
+        const headers = ["Émetteur", "Montant", "Année", "ID", "Date", "Code"];
+        let csvContent = headers.join(";") + "\n";
+        
+        // Données CSV
+        scannedTickets.forEach(ticket => {
+          const row = [
+            ticket.emitter,
+            ticket.amount,
+            ticket.year,
+            ticket.id,
+            ticket.date,
+            ticket.code
+          ];
+          csvContent += row.join(";") + "\n";
+        });
+        
+        // Créer un blob et un lien de téléchargement
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const date = new Date().toISOString().split('T')[0];
+        
+        link.setAttribute("href", url);
+        link.setAttribute("download", `tickets_restaurant_${date}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      updateTicketsList();
+      
+      // Fonction pour traiter les données du code-barres
+      function processBarcodeData(data) {
+        // Vérifier si le code-barres est valide (au moins 20 caractères)
+        if (!data || data.length < 20) {
+          return { error: "Code-barres invalide" };
+        }
+        
+        // Extraire l'identifiant unique (11 premiers caractères)
+        const ticketId = data.substring(0, 11);
+        
+        // Vérifier si le ticket a déjà été scanné
+        if (scannedIds.has(ticketId)) {
+          return { error: "Ce ticket a déjà été scanné" };
+        }
+        
+        // Extraire les caractères 13 à 16 (index 12 à 15)
+        const amountDigits = data.substring(12, 16);
+        
+        // Vérifier que ce sont bien des chiffres
+        if (!/^\d+$/.test(amountDigits)) {
+          return { error: "Code-barres invalide" };
+        }
+        
+        // Convertir en décimal avec 2 chiffres après la virgule
+        const amountValue = parseInt(amountDigits);
+        if (isNaN(amountValue)) {
+          return { error: "Code-barres invalide" };
+        }
+        
+        const amount = (amountValue / 100).toFixed(2).replace('.', ',');
+        
+        // Extraire les caractères 17 à 18 (index 16 à 17)
+        const emitterCodeStr = data.substring(16, 18);
+        
+        // Vérifier que ce sont bien des chiffres
+        if (!/^\d+$/.test(emitterCodeStr)) {
+          return { error: "Code-barres invalide" };
+        }
+        
+        const emitterCode = parseInt(emitterCodeStr);
+        let emitter = "Inconnu";
+        
+        // Déterminer l'émetteur selon les nouvelles spécifications
+        if (emitterCode < 20) {
+          emitter = "UpDéjeuner";
+        } else if (emitterCode >= 20 && emitterCode < 30) {
+          emitter = "Edenred";
+        } else if (emitterCode >= 30 && emitterCode < 40) {
+          emitter = "Bimpli";
+        } else if (emitterCode >= 40) {
+          emitter = "Pluxee";
+        }
+        
+        return { 
+          id: ticketId,
+          amount, 
+          emitter, 
+          year: selectedYear,
+          code: data,
+          date: new Date().toLocaleDateString('fr-FR')
+        };
+      }
+      
+      // Afficher un message d'erreur
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.style.display = 'block';
+        errorSound.play();
+        
+        setTimeout(() => {
+          errorMessage.style.display = 'none';
+        }, 3000);
+      }
+      
+      // Afficher un message de succès
+      function showSuccess(message) {
+        const successMessage = document.getElementById('successMessage');
+        successMessage.textContent = message;
+        successMessage.style.display = 'block';
+        
+        setTimeout(() => {
+          successMessage.style.display = 'none';
+        }, 3000);
+      }
+      
+      // Arrêter le scanner
+      function stopScanner() {
+        if (isScanning) {
+          isScanning = false;
+          toggleScannerBtn.innerHTML = '<i class="fas fa-camera"></i> Démarrer le Scanner';
+          scannerStatus.innerHTML = '<i class="fas fa-pause-circle"></i> Scanner arrêté';
+          scannerStatus.style.color = "#ff4d4d";
           
-          scannerStatus.textContent = "Ticket scanné avec succès!";
-          scannerStatus.style.color = "#4caf50";
+          // Masquer le conteneur du scanner
+          scannerContainer.style.display = 'none';
           
-          // Fermer automatiquement après 2 secondes
-          setTimeout(() => {
-            if (window.opener || window.history.length > 1) {
-              window.close();
+          if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+          }
+          
+          if (codeReader) {
+            codeReader.reset();
+            codeReader = null;
+          }
+        }
+      }
+      
+      // Démarrer le scanner
+      async function startScanner() {
+        if (isScanning) return;
+        
+        isScanning = true;
+        toggleScannerBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter le Scanner';
+        scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Démarrage de la caméra...';
+        scannerStatus.style.color = "#2575fc";
+        
+        // Afficher le conteneur du scanner
+        scannerContainer.style.display = 'block';
+        
+        try {
+          // Essayer d'abord avec la caméra arrière
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "environment" }
+          });
+          video.srcObject = stream;
+          
+          codeReader = new ZXing.BrowserBarcodeReader();
+          
+          codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+              const ticketData = processBarcodeData(result.text);
+              
+              if (ticketData.error) {
+                showError(ticketData.error);
+                return;
+              }
+              
+              // Jouer le bip sonore
+              beep.play();
+              
+              // Sauvegarder le ticket
+              scannedTickets.push(ticketData);
+              scannedIds.add(ticketData.id);
+              localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+              updateTicketsList();
+              
+              scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+              scannerStatus.style.color = "#4caf50";
+              showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
+              
+              // Réinitialiser le statut après 2 secondes
+              setTimeout(() => {
+                if (isScanning) {
+                  scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+                  scannerStatus.style.color = "#2575fc";
+                }
+              }, 2000);
             }
-          }, 2000);
+          });
+          
+          scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+          scannerStatus.style.color = "#2575fc";
+          
+        } catch (e) {
+          console.error("Erreur caméra arrière:", e);
+          scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Erreur caméra: ' + e.message;
+          scannerStatus.style.color = "#ff4d4d";
+          
+          // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            
+            codeReader = new ZXing.BrowserBarcodeReader();
+            codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+              if (result) {
+                const ticketData = processBarcodeData(result.text);
+                
+                if (ticketData.error) {
+                  showError(ticketData.error);
+                  return;
+                }
+                
+                beep.play();
+                
+                scannedTickets.push(ticketData);
+                scannedIds.add(ticketData.id);
+                localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                updateTicketsList();
+                
+                scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+                scannerStatus.style.color = "#4caf50";
+                showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
+                
+                setTimeout(() => {
+                  if (isScanning) {
+                    scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+                    scannerStatus.style.color = "#2575fc";
+                  }
+                }, 2000);
+              }
+            });
+            
+            scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Utilisation de la caméra avant...';
+            scannerStatus.style.color = "#2575fc";
+            
+          } catch (err) {
+            console.error("Erreur caméra avant:", err);
+            scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Impossible d\'accéder à la caméra';
+            scannerStatus.style.color = "#ff4d4d";
+            showError("Autorisez l'accès à la caméra pour utiliser le scanner");
+            stopScanner();
+          }
+        }
+      }
+      
+      // Bouton pour démarrer/arrêter le scanner
+      toggleScannerBtn.addEventListener('click', function() {
+        if (isScanning) {
+          stopScanner();
+        } else {
+          startScanner();
         }
       });
       
-      scannerStatus.textContent = "En cours de scan...";
-      scannerStatus.style.color = "#2575fc";
+      // Bouton pour effacer tous les tickets
+      clearButton.addEventListener('click', clearAllTickets);
       
-    } catch (e) {
-      console.error("Erreur caméra arrière:", e);
-      scannerStatus.textContent = "Erreur caméra: " + e.message;
-      scannerStatus.style.color = "#ff4d4d";
+      // Bouton pour exporter en CSV
+      exportButton.addEventListener('click', exportToCSV);
       
-      // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        
-        codeReader = new ZXing.BrowserBarcodeReader();
-        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-          if (result) {
-            const ticketData = processBarcodeData(result.text);
-            
-            if (ticketData.error) {
-              showError(ticketData.error);
-              return;
-            }
-            
-            beep.play();
-            
-            scannedTickets.push(ticketData);
-            scannedIds.add(ticketData.id);
-            localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-            updateTicketsList();
-            
-            scannerStatus.textContent = "Ticket scanné avec succès!";
-            scannerStatus.style.color = "#4caf50";
-            
-            setTimeout(() => {
-              if (window.opener || window.history.length > 1) {
-                window.close();
-              }
-            }, 2000);
-          }
-        });
-        
-        scannerStatus.textContent = "Utilisation de la caméra avant...";
-        scannerStatus.style.color = "#2575fc";
-        
-      } catch (err) {
-        console.error("Erreur caméra avant:", err);
-        scannerStatus.textContent = "Impossible d'accéder à la caméra";
-        scannerStatus.style.color = "#ff4d4d";
-        showError("Autorisez l'accès à la caméra pour utiliser le scanner");
-        stopScanner();
-      }
+      // Initialiser l'application sans démarrer le scanner
+      updateTicketsList();
     }
-  }
-  
-  // Bouton pour démarrer/arrêter le scanner
-  toggleScannerBtn.addEventListener('click', function() {
-    if (isScanning) {
-      stopScanner();
-    } else {
-      startScanner();
-    }
-  });
-  
-  // Bouton pour effacer tous les tickets
-  clearButton.addEventListener('click', clearAllTickets);
-  
-  // Bouton pour exporter en CSV
-  exportButton.addEventListener('click', exportToCSV);
-  
-  // Démarrer automatiquement le scanner au chargement de la page
-  startScanner();
-});
-    
-    // Le reste du code JavaScript reste identique à la version précédente
-    // ... (le code JavaScript complet de la version précédente)
   </script>
 </body>
 </html>
