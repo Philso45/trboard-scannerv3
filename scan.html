@@ -101,6 +101,56 @@
       100% { transform: scale(1.05); }
     }
     
+    /* Modal de confirmation */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background-color: white;
+      padding: 24px;
+      border-radius: 16px;
+      width: 85%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-content h3 {
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+    
+    .modal-content p {
+      margin-bottom: 20px;
+      color: var(--gray);
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .button-secondary {
+      background: var(--gray);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+    
+    .button-secondary:hover {
+      background: #475569;
+      box-shadow: 0 6px 16px rgba(100, 116, 139, 0.4);
+    }
+    
     /* Container principal */
     .container {
       background-color: var(--card-bg);
@@ -155,365 +205,406 @@
       text-align: center;
     }
     
+    .year-selector-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    
     .year-selector {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    
-    .year-selector label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      color: var(--primary);
-    }
-    
-    .year-selector select {
-      padding: 12px 20px;
-      border-radius: 50px;
-      border: 2px solid var(--primary);
-      font-size: 16px;
-      background-color: white;
-      color: var(--dark);
-      font-weight: 500;
-      cursor: pointer;
-      outline: none;
-      transition: all 0.2s;
-    }
-    
-    .year-selector select:focus {
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-    }
-    
-    .scanner-status {
-      text-align: center;
-      margin: 16px 0;
-      font-weight: 600;
-      color: var(--primary);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    
-    .scanner-container {
-      width: 100%;
-      height: 280px;
-      margin-bottom: 20px;
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
-      border: 2px solid var(--primary);
-      background-color: #f1f5f9;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-      display: none;
-    }
-    
-    #video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
-    .scan-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 10;
-    }
-    
-    .scan-frame {
-      position: absolute;
-      border: 2px solid var(--accent);
-      width: 80%;
-      height: 30%;
-      top: 35%;
-      left: 10%;
-      border-radius: 16px;
-      box-sizing: border-box;
-    }
-    
-    .scan-line {
-      position: absolute;
-      height: 2px;
-      width: 100%;
-      background: var(--accent);
-      top: 50%;
-      animation: scan 2s linear infinite;
-      box-shadow: 0 0 10px var(--accent);
-    }
-    
-    .scan-corner {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border: 3px solid var(--accent);
-    }
-    
-    .corner-tl {
-      top: -3px;
-      left: -3px;
-      border-right: none;
-      border-bottom: none;
-    }
-    
-    .corner-tr {
-      top: -3px;
-      right: -3px;
-      border-left: none;
-      border-bottom: none;
-    }
-    
-    .corner-bl {
-      bottom: -3px;
-      left: -3px;
-      border-right: none;
-      border-top: none;
-    }
-    
-    .corner-br {
-      bottom: -3px;
-      right: -3px;
-      border-left: none;
-      border-top: none;
-    }
-    
-    @keyframes scan {
-      0% { top: 10%; }
-      50% { top: 90%; }
-      100% { top: 10%; }
-    }
-    
-    .stats-container {
-      background: white;
-      border-radius: 16px;
-      padding: 16px;
-      margin: 16px 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-    
-    .total-amount {
-      background-color: var(--primary);
-      color: white;
-      padding: 16px;
-      border-radius: 16px;
-      text-align: center;
-      margin-bottom: 16px;
-      font-weight: 700;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-    }
-    
-    .emitter-totals {
-      margin: 16px 0;
-    }
-    
-    .emitter-total {
-      background-color: var(--light);
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 500;
-    }
-    
-    .emitter-logo {
-      width: 30px;
-      height: 30px;
-      object-fit: contain;
-      margin-right: 10px;
-    }
-    
-    .emitter-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .emitter-badge {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-    }
-    
-    .ticket-list {
-      width: 100%;
-      margin-top: 16px;
-      max-height: 200px;
-      overflow-y: auto;
-      border-radius: 12px;
-      background: white;
-      padding: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-    
-    .ticket-item {
-      background-color: var(--light);
-      padding: 12px;
-      margin-bottom: 8px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: all 0.2s;
-    }
-    
-    .ticket-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .ticket-info {
-      flex: 1;
-      display: flex;
-      align-items: center;
-    }
-    
-    .ticket-emitter {
-      display: flex;
-      align-items: center;
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 4px;
-    }
-    
-    .ticket-id {
-      font-size: 12px;
-      color: var(--gray);
-    }
-    
-    .ticket-amount {
-      font-weight: 700;
-      color: var(--primary);
-      font-size: 16px;
-    }
-    
-    .buttons-container {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    
-    .button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 16px 24px;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    }
-    
-    .button:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
-    }
-    
-    .button:active {
-      transform: translateY(0);
-    }
-    
-    .button-success {
-      background: var(--accent);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .button-success:hover {
-      background: #0D9D6E;
-      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-    }
-    
-    .button-danger {
-      background: var(--danger);
-      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-    }
-    
-    .button-danger:hover {
-      background: #DC2626;
-      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
-    }
-    
-    .error-message {
-      background-color: #FEF2F2;
-      color: var(--danger);
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin: 12px 0;
-      text-align: center;
-      display: none;
-      font-weight: 500;
-      border-left: 4px solid var(--danger);
-    }
-    
-    .success-message {
-      background-color: #F0FDF4;
-      color: var(--accent);
-      padding: 12px 16px;
-      border-radius: 12px;
-      margin: 12px 0;
-      text-align: center;
-      display: none;
-      font-weight: 500;
-      border-left: 4px solid var(--accent);
-    }
-    
-    .empty-state {
-      text-align: center;
-      padding: 30px 20px;
-      color: var(--gray);
-    }
-    
-    .empty-state i {
-      font-size: 40px;
-      margin-bottom: 16px;
-      color: var(--light);
-    }
-    
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .badge-success {
-      background: #D1FAE5;
-      color: #065F46;
-    }
-    
-    .badge-danger {
-      background: #FEE2E2;
-      color: #991B1B;
-    }
-    
-    .security-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 20px;
-      padding: 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      color: white;
-      font-size: 14px;
-    }
+  flex-direction: column;
+  align-items: center;
+  background: var(--light);
+  padding: 12px 16px;
+  border-radius: 16px;
+  width: fit-content;
+}
+
+.year-selector label {
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.year-selector select {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--primary);
+  font-size: 14px;
+  background-color: white;
+  color: var(--dark);
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.year-selector select:focus {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.scanner-status {
+  text-align: center;
+  margin: 16px 0;
+  font-weight: 600;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.scanner-container {
+  width: 100%;
+  height: 280px;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid var(--primary);
+  background-color: #f1f5f9;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scan-frame {
+  position: absolute;
+  border: 2px solid var(--accent);
+  width: 80%;
+  height: 30%;
+  top: 35%;
+  left: 10%;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.scan-line {
+  position: absolute;
+  height: 2px;
+  width: 100%;
+  background: var(--accent);
+  top: 50%;
+  animation: scan 2s linear infinite;
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.scan-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--accent);
+}
+
+.corner-tl {
+  top: -3px;
+  left: -3px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner-tr {
+  top: -3px;
+  right: -3px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.corner-bl {
+  bottom: -3px;
+  left: -3px;
+  border-right: none;
+  border-top: none;
+}
+
+.corner-br {
+  bottom: -3px;
+  right: -3px;
+  border-left: none;
+  border-top: none;
+}
+
+@keyframes scan {
+  0% { top: 10%; }
+  50% { top: 90%; }
+  100% { top: 10%; }
+}
+
+.stats-container {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  margin: 16px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.total-amount {
+  background-color: var(--primary);
+  color: white;
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 16px;
+  font-weight: 700;
+  font-size: 20px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.emitter-totals {
+  margin: 16px 0;
+}
+
+.emitter-total {
+  background-color: var(--light);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.emitter-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-right: 10px;
+}
+
+.emitter-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emitter-badge {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.tickets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0 10px 0;
+}
+
+.tickets-header h2 {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ticket-count {
+  background: var(--light);
+  color: var(--primary);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ticket-list {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 12px;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.ticket-item {
+  background-color: var(--light);
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.ticket-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.ticket-emitter {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.ticket-id {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.ticket-amount {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.button-success {
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.button-success:hover {
+  background: #0D9D6E;
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.button-danger {
+  background: var(--danger);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.button-danger:hover {
+  background: #DC2626;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.error-message {
+  background-color: #FEF2F2;
+  color: var(--danger);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 12px 0;
+  text-align: center;
+  display: none;
+  font-weight: 500;
+  border-left: 4px solid var(--danger);
+}
+
+.success-message {
+  background-color: #F0FDF4;
+  color: var(--accent);
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin: 12px 0;
+  text-align: center;
+  display: none;
+  font-weight: 500;
+  border-left: 4px solid var(--accent);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 20px;
+  color: var(--gray);
+}
+
+.empty-state i {
+  font-size: 40px;
+  margin-bottom: 16px;
+  color: var(--light);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-success {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.badge-danger {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+}
+
+.copyright {
+  text-align: center;
+  margin-top: 20px;
+  color: var(--gray);
+  font-size: 12px;
+  opacity: 0.8;
+}
   </style>
 </head>
 <body>
@@ -525,6 +616,18 @@
     <h1 class="app-name">ScanTicket Pro</h1>
     <div class="progress-bar">
       <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <!-- Confirmation de fermeture -->
+  <div id="exit-confirm" class="modal">
+    <div class="modal-content">
+      <h3>Quitter l'application ?</h3>
+      <p>Voulez-vous vraiment quitter ScanTicket Pro ?</p>
+      <div class="modal-buttons">
+        <button id="exit-cancel" class="button button-secondary">Annuler</button>
+        <button id="exit-confirm-btn" class="button button-danger">Quitter</button>
+      </div>
     </div>
   </div>
 
@@ -542,14 +645,16 @@
       </div>
     </header>
     
-    <div class="year-selector">
-      <label for="year">Année des tickets</label>
-      <select id="year">
-        <option value="2024">2024</option>
-        <option value="2025" selected>2025</option>
-        <option value="2026">2026</option>
-        <option value="2027">2027</option>
-      </select>
+    <div class="year-selector-container">
+      <div class="year-selector">
+        <label for="year">Année des tickets</label>
+        <select id="year">
+          <option value="2024">2024</option>
+          <option value="2025" selected>2025</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+        </select>
+      </div>
     </div>
     
     <div class="scanner-status" id="scannerStatus">
@@ -583,6 +688,11 @@
       </div>
     </div>
     
+    <div class="tickets-header">
+      <h2>Vos tickets scannés</h2>
+      <span class="ticket-count" id="ticketCount">0 ticket(s)</span>
+    </div>
+    
     <div class="ticket-list" id="ticketList">
       <div class="empty-state">
         <i class="fas fa-receipt"></i>
@@ -603,9 +713,15 @@
       </button>
     </div>
     
+    <div class="error-message" id="exportErrorMessage"></div>
+    
     <div class="security-badge">
       <i class="fas fa-lock"></i>
       <span>Application sécurisée - Données stockées localement</span>
+    </div>
+    
+    <div class="copyright">
+      &copy; 2025 ScanTicket Pro. Tous droits réservés.
     </div>
     
     <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
@@ -613,430 +729,497 @@
   </div>
 
   <script>
-    // Gestion de l'écran de chargement
-    document.addEventListener('DOMContentLoaded', function() {
-      const splashScreen = document.getElementById('splash-screen');
-      const appContainer = document.getElementById('app-container');
-      const progressBar = document.getElementById('progress');
-      
-      // Démarrer l'animation de la barre de progression
-      setTimeout(() => {
-        progressBar.style.width = '100%';
-      }, 100);
-      
-      // Cacher l'écran de chargement après 3 secondes
-      setTimeout(() => {
-        splashScreen.style.opacity = '0';
-        setTimeout(() => {
-          splashScreen.style.display = 'none';
-          appContainer.style.display = 'block';
-          initializeApp();
-        }, 500);
-      }, 3000);
-    });
-    
-    function initializeApp() {
-      const video = document.getElementById('video');
-      const beep = document.getElementById('beep');
-      const errorSound = document.getElementById('errorSound');
-      const toggleScannerBtn = document.getElementById('toggleScanner');
-      const scannerContainer = document.getElementById('scannerContainer');
-      const ticketsContainer = document.getElementById('ticketList');
-      const totalAmountElement = document.getElementById('totalAmount');
-      const emitterTotalsElement = document.getElementById('emitterTotals');
-      const scannerStatus = document.getElementById('scannerStatus');
-      const yearSelector = document.getElementById('year');
-      const errorMessage = document.getElementById('errorMessage');
-      const clearButton = document.getElementById('clearButton');
-      const exportButton = document.getElementById('exportButton');
-      
-      let codeReader = null;
-      let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
-      let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
-      let selectedYear = yearSelector.value;
-      let isScanning = false;
-      let stream = null;
-      
-      // URLs des logos des émetteurs
-      const emitterLogos = {
+    // URLs des logos des émetteurs
+    const emitterLogos = {
         "UpDéjeuner": "https://upload.wikimedia.org/wikipedia/fr/thumb/2/2a/Logo-up.png/320px-Logo-up.png",
         "Edenred": "https://upload.wikimedia.org/wikipedia/fr/thumb/5/5d/Edenred_logo_2018.svg/320px-Edenred_logo_2018.svg.png",
         "Bimpli": "https://www.bimpli.com/hubfs/Bimpli_Logo-1.png",
         "Pluxee": "https://www.pluxee.com/content/dam/pluxee/fr/logo/pluxee-logo-rvb.png",
         "Inconnu": "https://cdn-icons-png.flaticon.com/512/1178/1178471.png"
-      };
-      
-      // Mettre à jour l'année sélectionnée
-      yearSelector.addEventListener('change', function() {
-        selectedYear = this.value;
-      });
-      
-      // Calculer et afficher le montant total
-      function updateTotals() {
-        // Calcul du total général
-        const total = scannedTickets.reduce((sum, ticket) => {
-          return sum + parseFloat(ticket.amount.replace(',', '.'));
-        }, 0);
-        totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+    };
+
+    // Variables pour la gestion de l'historique
+    let currentView = 'main';
+    let exitConfirmationShown = false;
+
+    // Gestion de l'écran de chargement
+    document.addEventListener('DOMContentLoaded', function() {
+        const splashScreen = document.getElementById('splash-screen');
+        const appContainer = document.getElementById('app-container');
+        const progressBar = document.getElementById('progress');
         
-        // Calcul des totaux par émetteur
-        const emitterTotals = {};
-        scannedTickets.forEach(ticket => {
-          if (!emitterTotals[ticket.emitter]) {
-            emitterTotals[ticket.emitter] = 0;
-          }
-          emitterTotals[ticket.emitter] += parseFloat(ticket.amount.replace(',', '.'));
-        });
-        
-        // Affichage des totaux par émetteur
-        emitterTotalsElement.innerHTML = '';
-        for (const emitter in emitterTotals) {
-          const emitterElement = document.createElement('div');
-          emitterElement.className = 'emitter-total';
-          emitterElement.innerHTML = `
-            <div class="emitter-name">
-              <img src="${emitterLogos[emitter]}" alt="${emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
-              ${emitter}
-            </div>
-            <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
-          `;
-          emitterTotalsElement.appendChild(emitterElement);
-        }
-      }
-      
-      // Afficher la liste des tickets (sans défilement automatique)
-      function updateTicketsList() {
-        // Sauvegarder la position de défilement actuelle
-        const scrollPosition = ticketsContainer.scrollTop;
-        
-        ticketsContainer.innerHTML = '';
-        
-        if (scannedTickets.length === 0) {
-          ticketsContainer.innerHTML = `
-            <div class="empty-state">
-              <i class="fas fa-receipt"></i>
-              <p>Aucun ticket scanné</p>
-              <p class="badge badge-success">En attente de scan</p>
-            </div>
-          `;
-          return;
-        }
-        
-        // Trier les tickets par émetteur
-        const sortedTickets = [...scannedTickets].sort((a, b) => a.emitter.localeCompare(b.emitter));
-        
-        sortedTickets.forEach(ticket => {
-          const ticketElement = document.createElement('div');
-          ticketElement.className = 'ticket-item';
-          ticketElement.innerHTML = `
-            <div class="ticket-info">
-              <div class="ticket-emitter">
-                <img src="${emitterLogos[ticket.emitter]}" alt="${ticket.emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
-                <div>
-                  <div>${ticket.emitter}</div>
-                  <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
-                </div>
-              </div>
-            </div>
-            <div class="ticket-amount">${ticket.amount} €</div>
-          `;
-          ticketsContainer.appendChild(ticketElement);
-        });
-        
-        // Restaurer la position de défilement
-        ticketsContainer.scrollTop = scrollPosition;
-        
-        updateTotals();
-      }
-      
-      // Effacer tous les tickets
-      function clearAllTickets() {
-        if (confirm("Êtes-vous sûr de vouloir supprimer tous les tickets scannés ?")) {
-          scannedTickets = [];
-          scannedIds = new Set();
-          localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-          updateTicketsList();
-          // Remise à zéro du total
-          totalAmountElement.textContent = 'Total: 0,00 €';
-          emitterTotalsElement.innerHTML = '';
-        }
-      }
-      
-      // Exporter les données en CSV
-      function exportToCSV() {
-        if (scannedTickets.length === 0) {
-          showError("Aucun ticket à exporter");
-          return;
-        }
-        
-        // Entêtes CSV
-        const headers = ["Émetteur", "Montant", "Année", "ID", "Date", "Code"];
-        let csvContent = headers.join(";") + "\n";
-        
-        // Données CSV
-        scannedTickets.forEach(ticket => {
-          const row = [
-            ticket.emitter,
-            ticket.amount,
-            ticket.year,
-            ticket.id,
-            ticket.date,
-            ticket.code
-          ];
-          csvContent += row.join(";") + "\n";
-        });
-        
-        // Créer un blob et un lien de téléchargement
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        const date = new Date().toISOString().split('T')[0];
-        
-        link.setAttribute("href", url);
-        link.setAttribute("download", `tickets_restaurant_${date}.csv`);
-        link.style.visibility = 'hidden';
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
-      
-      updateTicketsList();
-      
-      // Fonction pour traiter les données du code-barres
-      function processBarcodeData(data) {
-        // Vérifier si le code-barres est valide (au moins 20 caractères)
-        if (!data || data.length < 20) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        // Extraire l'identifiant unique (11 premiers caractères)
-        const ticketId = data.substring(0, 11);
-        
-        // Vérifier si le ticket a déjà été scanné
-        if (scannedIds.has(ticketId)) {
-          return { error: "Ce ticket a déjà été scanné" };
-        }
-        
-        // Extraire les caractères 13 à 16 (index 12 à 15)
-        const amountDigits = data.substring(12, 16);
-        
-        // Vérifier que ce sont bien des chiffres
-        if (!/^\d+$/.test(amountDigits)) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        // Convertir en décimal avec 2 chiffres après la virgule
-        const amountValue = parseInt(amountDigits);
-        if (isNaN(amountValue)) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        const amount = (amountValue / 100).toFixed(2).replace('.', ',');
-        
-        // Extraire les caractères 17 à 18 (index 16 à 17)
-        const emitterCodeStr = data.substring(16, 18);
-        
-        // Vérifier que ce sont bien des chiffres
-        if (!/^\d+$/.test(emitterCodeStr)) {
-          return { error: "Code-barres invalide" };
-        }
-        
-        const emitterCode = parseInt(emitterCodeStr);
-        let emitter = "Inconnu";
-        
-        // Déterminer l'émetteur selon les nouvelles spécifications
-        if (emitterCode < 20) {
-          emitter = "UpDéjeuner";
-        } else if (emitterCode >= 20 && emitterCode < 30) {
-          emitter = "Edenred";
-        } else if (emitterCode >= 30 && emitterCode < 40) {
-          emitter = "Bimpli";
-        } else if (emitterCode >= 40) {
-          emitter = "Pluxee";
-        }
-        
-        return { 
-          id: ticketId,
-          amount, 
-          emitter, 
-          year: selectedYear,
-          code: data,
-          date: new Date().toLocaleDateString('fr-FR')
-        };
-      }
-      
-      // Afficher un message d'erreur
-      function showError(message) {
-        errorMessage.textContent = message;
-        errorMessage.style.display = 'block';
-        errorSound.play();
-        
+        // Démarrer l'animation de la barre de progression
         setTimeout(() => {
-          errorMessage.style.display = 'none';
-        }, 3000);
-      }
-      
-      // Afficher un message de succès
-      function showSuccess(message) {
-        const successMessage = document.getElementById('successMessage');
-        successMessage.textContent = message;
-        successMessage.style.display = 'block';
+            progressBar.style.width = '100%';
+        }, 100);
         
+        // Cacher l'écran de chargement après 3 secondes
         setTimeout(() => {
-          successMessage.style.display = 'none';
+            splashScreen.style.opacity = '0';
+            setTimeout(() => {
+                splashScreen.style.display = 'none';
+                appContainer.style.display = 'block';
+                initializeApp();
+            }, 500);
         }, 3000);
-      }
-      
-      // Arrêter le scanner
-      function stopScanner() {
-        if (isScanning) {
-          isScanning = false;
-          toggleScannerBtn.innerHTML = '<i class="fas fa-camera"></i> Démarrer le Scanner';
-          scannerStatus.innerHTML = '<i class="fas fa-pause-circle"></i> Scanner arrêté';
-          scannerStatus.style.color = "#ff4d4d";
-          
-          // Masquer le conteneur du scanner
-          scannerContainer.style.display = 'none';
-          
-          if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-          }
-          
-          if (codeReader) {
-            codeReader.reset();
-            codeReader = null;
-          }
-        }
-      }
-      
-      // Démarrer le scanner
-      async function startScanner() {
-        if (isScanning) return;
+    });
+
+    function initializeApp() {
+        const video = document.getElementById('video');
+        const beep = document.getElementById('beep');
+        const errorSound = document.getElementById('errorSound');
+        const toggleScannerBtn = document.getElementById('toggleScanner');
+        const scannerContainer = document.getElementById('scannerContainer');
+        const ticketsContainer = document.getElementById('ticketList');
+        const totalAmountElement = document.getElementById('totalAmount');
+        const emitterTotalsElement = document.getElementById('emitterTotals');
+        const scannerStatus = document.getElementById('scannerStatus');
+        const yearSelector = document.getElementById('year');
+        const errorMessage = document.getElementById('errorMessage');
+        const exportErrorMessage = document.getElementById('exportErrorMessage');
+        const clearButton = document.getElementById('clearButton');
+        const exportButton = document.getElementById('exportButton');
+        const ticketCountElement = document.getElementById('ticketCount');
+        const exitConfirmModal = document.getElementById('exit-confirm');
+        const exitCancelBtn = document.getElementById('exit-cancel');
+        const exitConfirmBtn = document.getElementById('exit-confirm-btn');
         
-        isScanning = true;
-        toggleScannerBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter le Scanner';
-        scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Démarrage de la caméra...';
-        scannerStatus.style.color = "#2575fc";
+        let codeReader = null;
+        let scannedTickets = JSON.parse(localStorage.getItem('scannedTickets')) || [];
+        let scannedIds = new Set(scannedTickets.map(ticket => ticket.id));
+        let selectedYear = yearSelector.value;
+        let isScanning = false;
+        let stream = null;
         
-        // Afficher le conteneur du scanner
-        scannerContainer.style.display = 'block';
-        
-        try {
-          // Essayer d'abord avec la caméra arrière
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
-          });
-          video.srcObject = stream;
-          
-          codeReader = new ZXing.BrowserBarcodeReader();
-          
-          codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-            if (result) {
-              const ticketData = processBarcodeData(result.text);
-              
-              if (ticketData.error) {
-                showError(ticketData.error);
-                return;
-              }
-              
-              // Jouer le bip sonore
-              beep.play();
-              
-              // Sauvegarder le ticket
-              scannedTickets.push(ticketData);
-              scannedIds.add(ticketData.id);
-              localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-              updateTicketsList();
-              
-              scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
-              scannerStatus.style.color = "#4caf50";
-              showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
-              
-              // Réinitialiser le statut après 2 secondes
-              setTimeout(() => {
-                if (isScanning) {
-                  scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
-                  scannerStatus.style.color = "#2575fc";
+        // Gestion du bouton retour Android/iOS
+        function setupBackButtonHandler() {
+            // Pour les navigateurs mobiles
+            window.addEventListener('popstate', function(event) {
+                if (!exitConfirmationShown) {
+                    showExitConfirm();
+                    // Empêcher la navigation par défaut
+                    history.pushState({view: currentView}, '');
+                    event.preventDefault();
                 }
-              }, 2000);
-            }
-          });
-          
-          scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
-          scannerStatus.style.color = "#2575fc";
-          
-        } catch (e) {
-          console.error("Erreur caméra arrière:", e);
-          scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Erreur caméra: ' + e.message;
-          scannerStatus.style.color = "#ff4d4d";
-          
-          // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
-          try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            
-            codeReader = new ZXing.BrowserBarcodeReader();
-            codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
-              if (result) {
-                const ticketData = processBarcodeData(result.text);
-                
-                if (ticketData.error) {
-                  showError(ticketData.error);
-                  return;
-                }
-                
-                beep.play();
-                
-                scannedTickets.push(ticketData);
-                scannedIds.add(ticketData.id);
-                localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
-                updateTicketsList();
-                
-                scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
-                scannerStatus.style.color = "#4caf50";
-                showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
-                
-                setTimeout(() => {
-                  if (isScanning) {
-                    scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
-                    scannerStatus.style.color = "#2575fc";
-                  }
-                }, 2000);
-              }
             });
             
-            scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Utilisation de la caméra avant...';
+            // Gérer le bouton retour physique sur mobile
+            window.addEventListener('beforeunload', function(event) {
+                if (!exitConfirmationShown) {
+                    const message = "Voulez-vous vraiment quitter l'application ?";
+                    event.returnValue = message;
+                    return message;
+                }
+            });
+        }
+        
+        function showExitConfirm() {
+            exitConfirmationShown = true;
+            exitConfirmModal.style.display = 'flex';
+        }
+        
+        function hideExitConfirm() {
+            exitConfirmationShown = false;
+            exitConfirmModal.style.display = 'none';
+        }
+        
+        exitCancelBtn.addEventListener('click', hideExitConfirm);
+        exitConfirmBtn.addEventListener('click', function() {
+            // Fermer la fenêtre du navigateur
+            window.close();
+        });
+        
+        // Initialiser la gestion du bouton retour
+        setupBackButtonHandler();
+        // Ajouter l'état initial à l'historique
+        history.pushState({view: currentView}, '');
+        
+        // Mettre à jour l'année sélectionnée
+        yearSelector.addEventListener('change', function() {
+            selectedYear = this.value;
+        });
+        
+        // Calculer et afficher le montant total
+        function updateTotals() {
+            // Calcul du total général
+            const total = scannedTickets.reduce((sum, ticket) => {
+                return sum + parseFloat(ticket.amount.replace(',', '.'));
+            }, 0);
+            totalAmountElement.textContent = `Total: ${total.toFixed(2).replace('.', ',')} €`;
+            
+            // Calcul des totaux par émetteur
+            const emitterTotals = {};
+            scannedTickets.forEach(ticket => {
+                if (!emitterTotals[ticket.emitter]) {
+                    emitterTotals[ticket.emitter] = 0;
+                }
+                emitterTotals[ticket.emitter] += parseFloat(ticket.amount.replace(',', '.'));
+            });
+            
+            // Affichage des totaux par émetteur
+            emitterTotalsElement.innerHTML = '';
+            for (const emitter in emitterTotals) {
+                const emitterElement = document.createElement('div');
+                emitterElement.className = 'emitter-total';
+                emitterElement.innerHTML = `
+                    <div class="emitter-name">
+                        <img src="${emitterLogos[emitter]}" alt="${emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
+                        ${emitter}
+                    </div>
+                    <div>${emitterTotals[emitter].toFixed(2).replace('.', ',')} €</div>
+                `;
+                emitterTotalsElement.appendChild(emitterElement);
+            }
+            
+            // Mettre à jour le compteur de tickets
+            ticketCountElement.textContent = `${scannedTickets.length} ticket(s)`;
+        }
+        
+        // Afficher la liste des tickets (les plus récents en bas)
+        function updateTicketsList() {
+            // Sauvegarder la position de défilement actuelle
+            const scrollPosition = ticketsContainer.scrollTop;
+            
+            ticketsContainer.innerHTML = '';
+            
+            if (scannedTickets.length === 0) {
+                ticketsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>Aucun ticket scanné</p>
+                        <p class="badge badge-success">En attente de scan</p>
+                    </div>
+                `;
+                ticketCountElement.textContent = "0 ticket(s)";
+                return;
+            }
+            
+            // Afficher les tickets dans l'ordre chronologique (les plus récents en bas)
+            scannedTickets.forEach(ticket => {
+                const ticketElement = document.createElement('div');
+                ticketElement.className = 'ticket-item';
+                ticketElement.innerHTML = `
+                    <div class="ticket-info">
+                        <div class="ticket-emitter">
+                            <img src="${emitterLogos[ticket.emitter]}" alt="${ticket.emitter}" class="emitter-logo" onerror="this.src='${emitterLogos['Inconnu']}'">
+                            <div>
+                                <div>${ticket.emitter}</div>
+                                <div class="ticket-id">ID: ${ticket.id} - ${ticket.date}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ticket-amount">${ticket.amount} €</div>
+                `;
+                ticketsContainer.appendChild(ticketElement);
+            });
+            
+            // Faire défiler vers le bas pour voir le ticket le plus récent
+            ticketsContainer.scrollTop = ticketsContainer.scrollHeight;
+            
+            updateTotals();
+        }
+        
+        // Effacer tous les tickets
+        function clearAllTickets() {
+            if (confirm("Êtes-vous sûr de vouloir supprimer tous les tickets scannés ?")) {
+                scannedTickets = [];
+                scannedIds = new Set();
+                localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                updateTicketsList();
+                // Remise à zéro du total
+                totalAmountElement.textContent = 'Total: 0,00 €';
+                emitterTotalsElement.innerHTML = '';
+            }
+        }
+        
+        // Exporter les données en CSV
+        function exportToCSV() {
+            if (scannedTickets.length === 0) {
+                showExportError("Aucun ticket à exporter");
+                return;
+            }
+            
+            // Entêtes CSV
+            const headers = ["Émetteur", "Montant", "Année", "ID", "Date", "Code"];
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(";") + "\n";
+            
+            // Données CSV
+            scannedTickets.forEach(ticket => {
+                const row = [
+                    ticket.emitter,
+                    ticket.amount,
+                    ticket.year,
+                    ticket.id,
+                    ticket.date,
+                    ticket.code
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+            
+            // Créer un lien de téléchargement
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            const date = new Date().toISOString().split('T')[0];
+            
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `tickets_restaurant_${date}.csv`);
+            document.body.appendChild(link);
+            
+            // Déclencher le téléchargement
+            link.click();
+            
+            // Nettoyer
+            document.body.removeChild(link);
+        }
+        
+        updateTicketsList();
+        
+        // Fonction pour traiter les données du code-barres
+        function processBarcodeData(data) {
+            // Vérifier si le code-barres est valide (au moins 20 caractères)
+            if (!data || data.length < 20) {
+                return { error: "Code-barres invalide" };
+            }
+            
+            // Extraire l'identifiant unique (11 premiers caractères)
+            const ticketId = data.substring(0, 11);
+            
+            // Vérifier si le ticket a déjà été scanné
+            if (scannedIds.has(ticketId)) {
+                return { error: "Ce ticket a déjà été scanné" };
+            }
+            
+            // Extraire les caractères 13 à 16 (index 12 à 15)
+            const amountDigits = data.substring(12, 16);
+            
+            // Vérifier que ce sont bien des chiffres
+            if (!/^\d+$/.test(amountDigits)) {
+                return { error: "Code-barres invalide" };
+            }
+            
+            // Convertir en décimal avec 2 chiffres après la virgule
+            const amountValue = parseInt(amountDigits);
+            if (isNaN(amountValue)) {
+                return { error: "Code-barres invalide" };
+            }
+            
+            const amount = (amountValue / 100).toFixed(2).replace('.', ',');
+            
+            // Extraire les caractères 17 à 18 (index 16 à 17)
+            const emitterCodeStr = data.substring(16, 18);
+            
+            // Vérifier que ce sont bien des chiffres
+            if (!/^\d+$/.test(emitterCodeStr)) {
+                return { error: "Code-barres invalide" };
+            }
+            
+            const emitterCode = parseInt(emitterCodeStr);
+            let emitter = "Inconnu";
+            
+            // Déterminer l'émetteur selon les nouvelles spécifications
+            if (emitterCode < 20) {
+                emitter = "UpDéjeuner";
+            } else if (emitterCode >= 20 && emitterCode < 30) {
+                emitter = "Edenred";
+            } else if (emitterCode >= 30 && emitterCode < 40) {
+                emitter = "Bimpli";
+            } else if (emitterCode >= 40) {
+                emitter = "Pluxee";
+            }
+            
+            return { 
+                id: ticketId,
+                amount, 
+                emitter, 
+                year: selectedYear,
+                code: data,
+                date: new Date().toLocaleDateString('fr-FR'),
+                timestamp: new Date().getTime() // Ajout d'un timestamp pour l'ordre chronologique
+            };
+        }
+        
+        // Afficher un message d'erreur
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            errorSound.play();
+            
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Afficher un message d'erreur pour l'export
+        function showExportError(message) {
+            exportErrorMessage.textContent = message;
+            exportErrorMessage.style.display = 'block';
+            errorSound.play();
+            
+            setTimeout(() => {
+                exportErrorMessage.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Afficher un message de succès
+        function showSuccess(message) {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            
+            setTimeout(() => {
+                successMessage.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Arrêter le scanner
+        function stopScanner() {
+            if (isScanning) {
+                isScanning = false;
+                toggleScannerBtn.innerHTML = '<i class="fas fa-camera"></i> Démarrer le Scanner';
+                scannerStatus.innerHTML = '<i class="fas fa-pause-circle"></i> Scanner arrêté';
+                scannerStatus.style.color = "#ff4d4d";
+                
+                // Masquer le conteneur du scanner
+                scannerContainer.style.display = 'none';
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+                
+                if (codeReader) {
+                    codeReader.reset();
+                    codeReader = null;
+                }
+            }
+        }
+        
+        // Démarrer le scanner
+        async function startScanner() {
+            if (isScanning) return;
+            
+            isScanning = true;
+            toggleScannerBtn.innerHTML = '<i class="fas fa-stop-circle"></i> Arrêter le Scanner';
+            scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Démarrage de la caméra...';
             scannerStatus.style.color = "#2575fc";
             
-          } catch (err) {
-            console.error("Erreur caméra avant:", err);
-            scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Impossible d\'accéder à la caméra';
-            scannerStatus.style.color = "#ff4d4d";
-            showError("Autorisez l'accès à la caméra pour utiliser le scanner");
-            stopScanner();
-          }
+            // Afficher le conteneur du scanner
+            scannerContainer.style.display = 'block';
+            
+            try {
+                // Essayer d'abord avec la caméra arrière
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" }
+                });
+                video.srcObject = stream;
+                
+                codeReader = new ZXing.BrowserBarcodeReader();
+                
+                codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+                    if (result) {
+                        const ticketData = processBarcodeData(result.text);
+                        
+                        if (ticketData.error) {
+                            showError(ticketData.error);
+                            return;
+                        }
+                        
+                        // Jouer le bip sonore
+                        beep.play();
+                        
+                        // Sauvegarder le ticket
+                        scannedTickets.push(ticketData);
+                        scannedIds.add(ticketData.id);
+                        localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                        updateTicketsList();
+                        
+                        scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+                        scannerStatus.style.color = "#4caf50";
+                        showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
+                        
+                        // Réinitialiser le statut après 2 secondes
+                        setTimeout(() => {
+                            if (isScanning) {
+                                scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+                                scannerStatus.style.color = "#2575fc";
+                            }
+                        }, 2000);
+                    }
+                });
+                
+                scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+                scannerStatus.style.color = "#2575fc";
+                
+            } catch (e) {
+                console.error("Erreur caméra arrière:", e);
+                scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Erreur caméra: ' + e.message;
+                scannerStatus.style.color = "#ff4d4d";
+                
+                // Essayer avec la caméra avant si la caméra arrière n'est pas disponible
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    
+                    codeReader = new ZXing.BrowserBarcodeReader();
+                    codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+                        if (result) {
+                            const ticketData = processBarcodeData(result.text);
+                            
+                            if (ticketData.error) {
+                                showError(ticketData.error);
+                                return;
+                            }
+                            
+                            beep.play();
+                            
+                            scannedTickets.push(ticketData);
+                            scannedIds.add(ticketData.id);
+                            localStorage.setItem('scannedTickets', JSON.stringify(scannedTickets));
+                            updateTicketsList();
+                            
+                            scannerStatus.innerHTML = '<i class="fas fa-check-circle"></i> Ticket scanné avec succès!';
+                            scannerStatus.style.color = "#4caf50";
+                            showSuccess(`Ticket ${ticketData.emitter} de ${ticketData.amount}€ ajouté!`);
+                            
+                            setTimeout(() => {
+                                if (isScanning) {
+                                    scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> En cours de scan...';
+                                    scannerStatus.style.color = "#2575fc";
+                                }
+                            }, 2000);
+                        }
+                    });
+                    
+                    scannerStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Utilisation de la caméra avant...';
+                    scannerStatus.style.color = "#2575fc";
+                    
+                } catch (err) {
+                    console.error("Erreur caméra avant:", err);
+                    scannerStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i> Impossible d\'accéder à la caméra';
+                    scannerStatus.style.color = "#ff4d4d";
+                    showError("Autorisez l'accès à la caméra pour utiliser le scanner");
+                    stopScanner();
+                }
+            }
         }
-      }
-      
-      // Bouton pour démarrer/arrêter le scanner
-      toggleScannerBtn.addEventListener('click', function() {
-        if (isScanning) {
-          stopScanner();
-        } else {
-          startScanner();
-        }
-      });
-      
-      // Bouton pour effacer tous les tickets
-      clearButton.addEventListener('click', clearAllTickets);
-      
-      // Bouton pour exporter en CSV
-      exportButton.addEventListener('click', exportToCSV);
-      
-      // Initialiser l'application sans démarrer le scanner
-      updateTicketsList();
+        
+        // Bouton pour démarrer/arrêter le scanner
+        toggleScannerBtn.addEventListener('click', function() {
+            if (isScanning) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        });
+        
+        // Bouton pour effacer tous les tickets
+        clearButton.addEventListener('click', clearAllTickets);
+        
+        // Bouton pour exporter en CSV
+        exportButton.addEventListener('click', exportToCSV);
+        
+        // Initialiser l'application sans démarrer le scanner
+        updateTicketsList();
     }
   </script>
 </body>
