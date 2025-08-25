@@ -536,19 +536,18 @@
       let isScanning = true;
       let stream = null;
       
-      // Fonction pour masquer l'écran de chargement
       // Gestion de l'écran de chargement
     document.addEventListener('DOMContentLoaded', function() {
       const splashScreen = document.getElementById('splash-screen');
       const appContainer = document.getElementById('app-container');
       const progressBar = document.getElementById('progress');
       
-      // Démarrer l'animation de la barre de progression
+    // Démarrer l'animation de la barre de progression
       setTimeout(() => {
         progressBar.style.width = '100%';
       }, 100);
       
-      // Cacher l'écran de chargement après 3 secondes
+       // Cacher l'écran de chargement après 3 secondes
       setTimeout(() => {
         splashScreen.style.opacity = '0';
         setTimeout(() => {
